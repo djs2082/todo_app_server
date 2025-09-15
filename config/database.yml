@@ -1,0 +1,24 @@
+default: &default
+  adapter: mysql2
+  encoding: utf8mb4
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  username: root
+  password: KaryaApp123
+  host: <%= ENV.fetch("DATABASE_HOST") { "db"  } %>
+  port: 3306
+
+development:
+  database: production_rails_app_production
+  <<: *default
+
+test:
+  <<: *default
+  database: production_rails_app_test
+
+production:
+  <<: *default
+  database: <%= ENV.fetch("DATABASE_NAME") { "production_rails_app_production" } %>
+  host: <%= ENV.fetch("DATABASE_HOST") %>
+  username: <%= ENV.fetch("DATABASE_USERNAME") %>
+  password: <%= ENV.fetch("DATABASE_PASSWORD") %>
+  port: <%= ENV.fetch("DATABASE_PORT") { "3306" } %>
