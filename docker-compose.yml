@@ -3,8 +3,8 @@ version: '3.8'
 services:
   app:
     build: .
-    expose:
-      - "3000"
+    ports:
+      - "3000:3000"
     environment:
       - DATABASE_HOST=db
       - DATABASE_USERNAME=root
@@ -64,16 +64,6 @@ services:
       - redis_data:/data
     ports:
       - "6379:6379"
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./ssl:/etc/nginx/ssl  # SSL certificates
-    depends_on:
-      - app
 
 volumes:
   mysql_data:
