@@ -3,8 +3,8 @@ version: '3.8'
 services:
   app:
     build: .
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     environment:
       - DATABASE_HOST=db
       - DATABASE_USERNAME=root
@@ -12,6 +12,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - RAILS_ENV=production
       - SECRET_KEY_BASE=7e0d468f2b0f07dc74ba4110cb674d55ef62649aadb22de9105f181e145b921fc82bdbd64a008fb607b5b9b41a92b40f1c521752d933270555f8036eae77352f
+      - RAILS_FORCE_SSL=false  
     depends_on:
       - db
       - redis
@@ -26,7 +27,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - RAILS_ENV=production
       - SECRET_KEY_BASE=7e0d468f2b0f07dc74ba4110cb674d55ef62649aadb22de9105f181e145b921fc82bdbd64a008fb607b5b9b41a92b40f1c521752d933270555f8036eae77352f
-
+      - RAILS_FORCE_SSL=false
     depends_on:
       - db
       - redis
@@ -41,7 +42,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - RAILS_ENV=production
       - SECRET_KEY_BASE=7e0d468f2b0f07dc74ba4110cb674d55ef62649aadb22de9105f181e145b921fc82bdbd64a008fb607b5b9b41a92b40f1c521752d933270555f8036eae77352f
-
+      - RAILS_FORCE_SSL=false
     depends_on:
       - db
       - redis
@@ -63,6 +64,16 @@ services:
       - redis_data:/data
     ports:
       - "6379:6379"
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl  # SSL certificates
+    depends_on:
+      - app
 
 volumes:
   mysql_data:
