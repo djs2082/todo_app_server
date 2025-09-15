@@ -4,17 +4,17 @@ services:
   app:
     build: .
     ports:
-      - "3000:3000"
+      - "80:3000"
     environment:
-      - DATABASE_HOST=db
-      - DATABASE_USERNAME=root
-      - DATABASE_PASSWORD=KaryaApp123
-      - REDIS_URL=redis://redis:6379/0
-      - RAILS_ENV=production
-      - SECRET_KEY_BASE=7e0d468f2b0f07dc74ba4110cb674d55ef62649aadb22de9105f181e145b921fc82bdbd64a008fb607b5b9b41a92b40f1c521752d933270555f8036eae77352f
-      - RAILS_SERVE_STATIC_FILES=true
-      - RAILS_LOG_TO_STDOUT=true
-      - ALLOWED_HOSTS=api.karya-app.com,localhost
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - REDIS_URL=${REDIS_URL}
+      - RAILS_ENV=${RAILS_ENV}
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+      - RAILS_SERVE_STATIC_FILES=${RAILS_SERVE_STATIC_FILES}
+      - RAILS_LOG_TO_STDOUT=${RAILS_LOG_TO_STDOUT}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
     depends_on:
       - db
       - redis
@@ -24,12 +24,12 @@ services:
   resque:
     build: .
     environment:
-      - DATABASE_HOST=db
-      - DATABASE_USERNAME=root
-      - DATABASE_PASSWORD=KaryaApp123
-      - REDIS_URL=redis://redis:6379/0
-      - RAILS_ENV=production
-      - SECRET_KEY_BASE=7e0d468f2b0f07dc74ba4110cb674d55ef62649aadb22de9105f181e145b921fc82bdbd64a008fb607b5b9b41a92b40f1c521752d933270555f8036eae77352f
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - REDIS_URL=${REDIS_URL}
+      - RAILS_ENV=${RAILS_ENV}
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
     depends_on:
       - db
       - redis
@@ -39,12 +39,12 @@ services:
   resque-scheduler:
     build: .
     environment:
-      - DATABASE_HOST=db
-      - DATABASE_USERNAME=root
-      - DATABASE_PASSWORD=KaryaApp123
-      - REDIS_URL=redis://redis:6379/0
-      - RAILS_ENV=production
-      - SECRET_KEY_BASE=7e0d468f2b0f07dc74ba4110cb674d55ef62649aadb22de9105f181e145b921fc82bdbd64a008fb607b5b9b41a92b40f1c521752d933270555f8036eae77352f
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - REDIS_URL=${REDIS_URL}
+      - RAILS_ENV=${RAILS_ENV}
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
     depends_on:
       - db
       - redis
@@ -54,8 +54,8 @@ services:
   db:
     image: mysql:8.0
     environment:
-      - MYSQL_ROOT_PASSWORD=KaryaApp123
-      - MYSQL_DATABASE=production_rails_app_production
+      - MYSQL_ROOT_PASSWORD=${DATABASE_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
     volumes:
       - mysql_data:/var/lib/mysql
     restart: unless-stopped
