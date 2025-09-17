@@ -4,7 +4,7 @@ services:
   app:
     build: .
     ports:
-      - "80:3000"
+      - "3000:3000"
     environment:
       - DATABASE_HOST=${DATABASE_HOST}
       - DATABASE_USERNAME=${DATABASE_USERNAME}
