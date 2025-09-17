@@ -10,6 +10,8 @@ Rails.application.routes.draw do
   # root "posts#index"
   post "/signup", to: "users#signup"
   get "/users", to: "users#index"
+  post "/login", to: "sessions#create"
+  resources :tasks
   get '/health', to: 'health#check'
 
 end
