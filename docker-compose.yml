@@ -18,6 +18,8 @@ services:
     depends_on:
       - db
       - redis
+    volumes:
+      - .:/app
     command: bash -c "bundle exec rails db:create db:migrate && bundle exec rails s -b 0.0.0.0 -p 3000"
     restart: unless-stopped
 
@@ -56,6 +58,8 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=${DATABASE_PASSWORD}
       - MYSQL_DATABASE=${MYSQL_DATABASE}
+    ports:
+      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     restart: unless-stopped
