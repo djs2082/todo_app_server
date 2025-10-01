@@ -1,9 +1,17 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+puts 'Seeding default email templates...'
+EmailTemplate.find_or_create_by!(name: 'welcome') do |t|
+	t.subject = 'Welcome to Karya App!'
+	t.body = <<~HTML
+		<h1>Welcome!</h1>
+		<p>Your account is ready. If you see this fallback, the view-based template did not render.</p>
+	HTML
+end
+
+EmailTemplate.find_or_create_by!(name: 'account_activation') do |t|
+	t.subject = 'Activate your Karya App account'
+	t.body = <<~HTML
+		<h1>Activate Account</h1>
+		<p>If you are seeing this, the HTML template file was not used.</p>
+	HTML
+end
+puts 'Email templates seeded.'

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Activate your account</title>
+    <style>
+      body { font-family: Arial, sans-serif; background:#f5f5f7; color:#222; }
+      .container { max-width:600px; margin:0 auto; background:#ffffff; padding:24px; border-radius:8px; }
+      h1 { font-size:20px; margin-bottom:16px; }
+      a.btn { background:#16a34a; color:#fff; padding:12px 20px; text-decoration:none; border-radius:4px; display:inline-block; }
+      p { line-height:1.5; }
+      .footer { margin-top:32px; font-size:12px; color:#777; }
+      code { background:#eee; padding:2px 4px; border-radius:4px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Hi <%= @variables[:first_name] || 'there' %>, verify your email</h1>
+      <p>
+        Thanks for signing up. Please confirm your email address to activate your account.
+      </p>
+      <p>
+        <a class="btn" href="<%= @variables[:activation_url] %>">Activate Account</a>
+      </p>
+      <p>
+        If the button doesn't work, copy and paste this link into your browser:<br>
+        <code><%= @variables[:activation_url] %></code>
+      </p>
+      <p>If you did not create this account, you can ignore this email.</p>
+      <div class="footer">&copy; <%= Time.now.year %> Karya App</div>
+    </div>
+  </body>
+</html>

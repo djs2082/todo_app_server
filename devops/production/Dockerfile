@@ -7,7 +7,7 @@ WORKDIR /app
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
 
-COPY ./../../ ./
+COPY . .
 
 EXPOSE 3000
 

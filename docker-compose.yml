@@ -6,32 +6,33 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_HOST=${DATABASE_HOST}
-      - DATABASE_USERNAME=${DATABASE_USERNAME}
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-      - REDIS_URL=${REDIS_URL}
-      - RAILS_ENV=${RAILS_ENV}
-      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
-      - RAILS_SERVE_STATIC_FILES=${RAILS_SERVE_STATIC_FILES}
-      - RAILS_LOG_TO_STDOUT=${RAILS_LOG_TO_STDOUT}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      DATABASE_HOST: db
+      DATABASE_USERNAME: root
+      DATABASE_PASSWORD: KaryaApp123
+      REDIS_URL: redis://redis:6379/0
+      RAILS_ENV: development
+      SECRET_KEY_BASE: your_secret_key_base
+      RAILS_SERVE_STATIC_FILES: "true"
+      RAILS_LOG_TO_STDOUT: "true"
+      ALLOWED_HOSTS: "*"
     depends_on:
       - db
       - redis
     volumes:
       - .:/app
-    command: bash -c "bundle exec rails db:create db:migrate && bundle exec rails s -b 0.0.0.0 -p 3000"
+    command: >
+      sh -c "rails generate rails_event_store_active_record:migration && bundle exec rails db:create db:migrate && bundle exec rails s -b 0.0.0.0 -p 3000"
     restart: unless-stopped
 
   resque:
     build: .
     environment:
-      - DATABASE_HOST=${DATABASE_HOST}
-      - DATABASE_USERNAME=${DATABASE_USERNAME}
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-      - REDIS_URL=${REDIS_URL}
-      - RAILS_ENV=${RAILS_ENV}
-      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+      DATABASE_HOST: db
+      DATABASE_USERNAME: root
+      DATABASE_PASSWORD: KaryaApp123
+      REDIS_URL: redis://redis:6379/0
+      RAILS_ENV: development
+      SECRET_KEY_BASE: your_secret_key_base
     depends_on:
       - db
       - redis
@@ -41,12 +42,12 @@ services:
   resque-scheduler:
     build: .
     environment:
-      - DATABASE_HOST=${DATABASE_HOST}
-      - DATABASE_USERNAME=${DATABASE_USERNAME}
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-      - REDIS_URL=${REDIS_URL}
-      - RAILS_ENV=${RAILS_ENV}
-      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+      DATABASE_HOST: db
+      DATABASE_USERNAME: root
+      DATABASE_PASSWORD: KaryaApp123
+      REDIS_URL: redis://redis:6379/0
+      RAILS_ENV: development
+      SECRET_KEY_BASE: your_secret_key_base
     depends_on:
       - db
       - redis
@@ -56,8 +57,8 @@ services:
   db:
     image: mysql:8.0
     environment:
-      - MYSQL_ROOT_PASSWORD=${DATABASE_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: KaryaApp123
+      MYSQL_DATABASE: karya-app-dev
     ports:
       - "3306:3306"
     volumes:
@@ -69,6 +70,8 @@ services:
     volumes:
       - redis_data:/data
     restart: unless-stopped
+    depends_on:
+      - db
 
 volumes:
   mysql_data:
