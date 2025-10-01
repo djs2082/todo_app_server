@@ -14,6 +14,11 @@
   </head>
   <body>
     <div class="container">
+      <!-- Top Banner: S3-hosted image. Priority: @variables[:banner_image_url] > ENV['EMAIL_BANNER_URL'] > hardcoded placeholder -->
+      <% banner_url = ENV['EMAIL_BANNER_URL']
+      <div style="text-align:center; margin:-24px -24px 24px -24px;">
+        <img src="<%= banner_url %>" alt="Welcome Banner" style="max-width:100%; display:block; border-top-left-radius:8px; border-top-right-radius:8px;" />
+      </div>
       <h1>Welcome, <%= @variables[:first_name] || 'there' %>!</h1>
       <p>
         We're excited to have you at Karya App. Your account has been created successfully.

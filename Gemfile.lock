@@ -80,10 +80,6 @@ GEM
       tzinfo (~> 2.0)
     addressable (2.8.7)
       public_suffix (>= 2.0.2, < 7.0)
-    aggregate_root (2.17.1)
-      ruby_event_store (= 2.17.1)
-    arkency-command_bus (0.4.1)
-      concurrent-ruby
     base64 (0.3.0)
     bcrypt (3.1.20)
     benchmark (0.4.1)
@@ -150,7 +146,8 @@ GEM
     mustermann (3.0.4)
       ruby2_keywords (~> 0.0.1)
     mutex_m (0.3.0)
-    mysql2 (0.5.6)
+    mysql2 (0.5.7)
+      bigdecimal
     net-imap (0.4.22)
       date
       net-protocol
@@ -220,17 +217,6 @@ GEM
     rails-html-sanitizer (1.6.2)
       loofah (~> 2.21)
       nokogiri (>= 1.15.7, != 1.16.7, != 1.16.6, != 1.16.5, != 1.16.4, != 1.16.3, != 1.16.2, != 1.16.1, != 1.16.0.rc1, != 1.16.0)
-    rails_event_store (2.17.1)
-      activejob (>= 6.0)
-      activemodel (>= 6.0)
-      activesupport (>= 6.0)
-      aggregate_root (= 2.17.1)
-      arkency-command_bus (>= 0.4)
-      rails_event_store_active_record (= 2.17.1)
-      ruby_event_store (= 2.17.1)
-      ruby_event_store-browser (= 2.17.1)
-    rails_event_store_active_record (2.17.1)
-      ruby_event_store-active_record (= 2.17.1)
     railties (7.1.5.2)
       actionpack (= 7.1.5.2)
       activesupport (= 7.1.5.2)
@@ -262,14 +248,6 @@ GEM
       resque (>= 1.27)
       rufus-scheduler (~> 3.2, != 3.3)
     ruby2_keywords (0.0.5)
-    ruby_event_store (2.17.1)
-      concurrent-ruby (~> 1.0, >= 1.1.6)
-    ruby_event_store-active_record (2.17.1)
-      activerecord (>= 6.0)
-      ruby_event_store (= 2.17.1)
-    ruby_event_store-browser (2.17.1)
-      rack
-      ruby_event_store (= 2.17.1)
     rufus-scheduler (3.9.2)
       fugit (~> 1.1, >= 1.11.1)
     securerandom (0.3.2)
@@ -312,11 +290,9 @@ DEPENDENCIES
   puma (>= 5.0)
   rack-cors
   rails (~> 7.1.5, >= 7.1.5.2)
-  rails_event_store
   redis (>= 4.0.1)
   resque (~> 2.0)
   resque-scheduler (~> 4.11)
-  ruby_event_store-active_record
   tzinfo-data
 
 RUBY VERSION

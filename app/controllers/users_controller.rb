@@ -4,7 +4,7 @@ class UsersController < ApplicationController
     user = User.new(signup_params)
     begin
       if user.save
-        render_created(message: "User created", data: { id: user.id })
+        render_created(message: "Successfully signed up. A verification email has been sent. Please check your inbox to activate your account.", data: { id: user.id })
       else
         render_failure(message: "User creation failed", errors: user.errors.full_messages)
       end
@@ -23,6 +23,6 @@ class UsersController < ApplicationController
   private
 
   def signup_params
-    params.require(:user).permit(:first_name, :last_name, :mobile, :email, :account_name, :password)
+    params.permit(:first_name, :last_name, :mobile, :email, :password, :password_confirmation, :account_name)
   end
-end
+end  

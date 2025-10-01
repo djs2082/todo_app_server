@@ -8,6 +8,8 @@ Bundler.require(*Rails.groups)
 
 module TodoAppServer
   class Application < Rails::Application
+    config.eager_load_paths << Rails.root.join('lib')
+    config.autoload_paths << Rails.root.join('lib')
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 7.1
 
@@ -28,5 +30,6 @@ module TodoAppServer
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+    config._preload_models = true
   end
 end

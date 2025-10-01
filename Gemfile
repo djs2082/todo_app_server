@@ -43,6 +43,7 @@ group :development, :test do
   gem "dotenv-rails"
   gem "byebug"
   gem "letter_opener"
+  gem "dotenv-rails"
 end
 
 group :development do

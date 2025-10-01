@@ -1,28 +1,30 @@
 version: '3.8'
 
 services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      DATABASE_HOST: db
-      DATABASE_USERNAME: root
-      DATABASE_PASSWORD: KaryaApp123
-      REDIS_URL: redis://redis:6379/0
-      RAILS_ENV: development
-      SECRET_KEY_BASE: your_secret_key_base
-      RAILS_SERVE_STATIC_FILES: "true"
-      RAILS_LOG_TO_STDOUT: "true"
-      ALLOWED_HOSTS: "*"
-    depends_on:
-      - db
-      - redis
-    volumes:
-      - .:/app
-    command: >
-      sh -c "rails generate rails_event_store_active_record:migration && bundle exec rails db:create db:migrate && bundle exec rails s -b 0.0.0.0 -p 3000"
-    restart: unless-stopped
+  # app:
+  #   stdin_open: true
+  #   tty: true
+  #   build: .
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     DATABASE_HOST: db
+  #     DATABASE_USERNAME: root
+  #     DATABASE_PASSWORD: KaryaApp123
+  #     REDIS_URL: redis://redis:6379/0
+  #     RAILS_ENV: development
+  #     SECRET_KEY_BASE: your_secret_key_base
+  #     RAILS_SERVE_STATIC_FILES: "true"
+  #     RAILS_LOG_TO_STDOUT: "true"
+  #     ALLOWED_HOSTS: "*"
+  #   depends_on:
+  #     - db
+  #     - redis
+  #   volumes:
+  #     - .:/app
+  #   command: >
+  #     sh -c "bundle exec rails db:create db:migrate && bundle exec rails s -b 0.0.0.0 -p 3000"
+  #   restart: unless-stopped
 
   resque:
     build: .

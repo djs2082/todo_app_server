@@ -81,6 +81,19 @@ shell: ## Enter app container shell
 	@echo "$(YELLOW)Entering app container shell...$(NC)"
 	docker compose -f $(COMPOSE_FILE) exec app bash
 
+bash: ## Enter app container shell
+	@echo "$(YELLOW)Entering app container bash...$(NC)"
+	docker exec -it app bash
+
+bashcid: ## Enter app container using resolved container ID (docker exec -it <container_id> bash)
+	@cid=$$(docker compose -f $(COMPOSE_FILE) ps -q app); \
+	if [ -z "$$cid" ]; then \
+	  echo "$(RED)App container not running. Start services with 'make up'.$(NC)"; \
+	  exit 1; \
+	fi; \
+	echo "$(YELLOW)Opening bash in container $$cid ...$(NC)"; \
+	docker exec -it $$cid bash
+
 shell-db: ## Enter database container shell
 	@echo "$(YELLOW)Entering database container shell...$(NC)"
 	docker compose -f $(COMPOSE_FILE) exec db bash
@@ -95,6 +108,7 @@ exec: ## Execute command in app container (usage: make exec CMD="rails -v")
 		exit 1; \
 	fi
 	docker compose -f $(COMPOSE_FILE) exec app $(CMD)
+
 
 # Database Operations
 migrate: ## Run database migrations

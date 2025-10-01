@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 20250940) do
+ActiveRecord::Schema[7.1].define(version: 20251001) do
   create_table "email_templates", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name", null: false
     t.string "subject", null: false
@@ -18,6 +18,22 @@ ActiveRecord::Schema[7.1].define(version: 20250940) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_email_templates_on_name", unique: true
+  end
+
+  create_table "events", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "kind", null: false
+    t.string "subject_type", null: false
+    t.bigint "subject_id", null: false
+    t.string "initiator_type"
+    t.bigint "initiator_id"
+    t.json "message", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_events_on_created_at"
+    t.index ["initiator_type", "initiator_id"], name: "index_events_on_initiator_type_and_initiator_id"
+    t.index ["kind", "subject_type", "subject_id"], name: "index_events_on_kind_and_subject"
+    t.index ["kind"], name: "index_events_on_kind"
+    t.index ["subject_type", "subject_id"], name: "index_events_on_subject_type_and_subject_id"
   end
 
   create_table "settings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|

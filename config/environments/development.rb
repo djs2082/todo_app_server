@@ -73,4 +73,17 @@ Rails.application.configure do
     url: ENV.fetch("REDIS_URL") { "redis://localhost:6379/1" },
     namespace: "karya_cache",
   }
+
+  config.action_mailer.delivery_method = :letter_opener
+  config.action_mailer.smtp_settings = {
+  address: ENV['SMTP_ADDRESS'],       # e.g., email-smtp.us-east-1.amazonaws.com
+  port: 587,
+  domain: 'mail.karya-app.com',         # e.g., example.com
+  user_name: ENV['SMTP_USERNAME'],    # SES SMTP username
+  password: ENV['SMTP_PASSWORD'],     # SES SMTP password
+  authentication: :login,
+  enable_starttls_auto: true
+}
+config.action_mailer.default_url_options = { host: 'localhost:3000', protocol: 'http' }
+
 end
