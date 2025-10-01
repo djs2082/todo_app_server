@@ -94,7 +94,7 @@ Rails.application.configure do
     namespace: "karya_cache",
   }
 
-  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.delivery_method = ENV.fetch('MAILER_DELIVERY_METHOD', 'smtp').to_sym
   config.action_mailer.smtp_settings = {
   address: ENV['SMTP_ADDRESS'],       # e.g., email-smtp.us-east-1.amazonaws.com
   port: 587,
@@ -106,4 +106,6 @@ Rails.application.configure do
 }
 
 config.action_mailer.default_url_options = { host: 'localhost:3000', protocol: 'http' }
+config.action_mailer.asset_host = "http://api.karya-app.com"
+
 end

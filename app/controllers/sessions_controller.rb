@@ -15,3 +15,4 @@ class SessionsController < ApplicationController
     params.permit(:email, :password)
   end
 end
+ 

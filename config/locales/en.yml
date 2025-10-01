@@ -29,3 +29,7 @@
 
 en:
   hello: "Hello world"
+  signup_activation_mail: "Successfully signed up. A verification email has been sent. Please check your inbox to activate your account."
+  errors:
+    signup_fail: "Validation failed: %{errors}"
+    signup_record_not_unique: "mobile or email has already been taken"

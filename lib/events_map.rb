@@ -15,7 +15,7 @@ class User < ApplicationRecord
          return unless user
         EmailService.send_email(
             to: user.email,
-            template_name: 'welcome',
+            template_name: 'account_activation',
             context: {
                 first_name: user.first_name,
                 activation_url: activation_url(user.activation_token)

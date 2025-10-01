@@ -1,20 +1,20 @@
 class UsersController < ApplicationController
-  # POST /signup
+
   def signup
     user = User.new(signup_params)
     begin
       if user.save
-        render_created(message: "Successfully signed up. A verification email has been sent. Please check your inbox to activate your account.", data: { id: user.id })
+        render_created(message: I18n.t("signup_activation_mail"), data: { id: user.id })
       else
-        render_failure(message: "User creation failed", errors: user.errors.full_messages)
+        render_failure(message: I18n.t("errors.signup_fail"), errors: user.errors.full_messages)
       end
     rescue ActiveRecord::RecordNotUnique => e
       # Map DB uniqueness error to a friendly validation error
-      render_failure(message: "User creation failed", errors: ["mobile or email has already been taken"])
+      render_failure(message: I18n.t("errors.signup_fail"), errors: [I18n.t("errors.signup_record_not_unique")])
     end
   end
 
-  # GET /users
+
   def index
     users = User.all  
     render json: users.as_json(only: [:id, :first_name, :last_name, :mobile, :email, :account_name, :created_at])

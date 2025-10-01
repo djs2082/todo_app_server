@@ -16,8 +16,8 @@ class UserMailer < ApplicationMailer
     subject_text = template.subject
 
     view_path = "email_templates/#{template_name}"
-
-    if lookup_context.template_exists?(template_name, ['email_templates'], true)
+    # Check for an HTML (non-partial) template at app/views/email_templates/<template_name>.html.erb
+    if lookup_context.exists?(template_name, ['email_templates'], false, [:html])
       mail(to: user_email, subject: subject_text) do |format|
         format.html { render view_path }
       end
