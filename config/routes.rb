@@ -10,6 +10,10 @@ Rails.application.routes.draw do
   # root "posts#index"
   post "/signup", to: "users#signup"
   get "/users", to: "users#index"
+  put "/activate", to: "users#activate"
+  # Local failure page to render activation errors with a message
+  get "/activation/failure", to: "users#activation_failure", as: :activation_failure
+  post "/resend_activation", to: "users#resend_activation"
   post "/login", to: "sessions#create"
   resources :tasks
   resources :settings, only: [:index, :create, :update, :destroy]

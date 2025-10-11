@@ -48,6 +48,8 @@ group :development, :test do
   gem "byebug"
   gem "letter_opener"
   gem "dotenv-rails"
+  gem "rspec-rails", "~> 6.1"
+  gem "simplecov", require: false, group: :test
 end
 
 group :development do

@@ -7,7 +7,6 @@ _preload_models = [
 ]
 
 class User < ApplicationRecord
-   puts("Ropend User Model")
     extend Events::Subscriber
     subscribe :user_signed_up, :send_activation_email
 
@@ -27,8 +26,8 @@ class User < ApplicationRecord
     private
 
     def self.activation_url(token)
-        base = ENV.fetch('APP_BASE_URL') { 'http://localhost:3000' }
-        "#{base}/activate?token=#{token}"
+        base = ENV.fetch('WEB_APP_BASE_URL') { 'http://localhost:8000' }
+        "#{base}/activate/#{token}"
     end
 end
 

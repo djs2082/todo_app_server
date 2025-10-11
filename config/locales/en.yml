@@ -33,3 +33,11 @@ en:
   errors:
     signup_fail: "Validation failed: %{errors}"
     signup_record_not_unique: "mobile or email has already been taken"
+    activation_token_missing: "Invalid activation URL or link has expired"
+    invalid_email_or_password: "Invalid email or password"
+    user_not_activated: "Account not activated. Please check your email for the activation link."
+    activation_failed: "Activation failed"
+  success:
+    login_success: "Login successful"
+    account_already_activated: "Account already activated"
+    account_activated: "Account activated successfully"
