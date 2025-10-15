@@ -7,12 +7,6 @@ WORKDIR /app
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
 
-COPY ./../../ ./
+COPY . .
 
 EXPOSE 3000
-
-# scp -r -i your-key.pem ./app ubuntu@your-instance-public-ip:/home/ubuntu/
-# ssh -i your-key.pem ubuntu@your-instance-public-ip
-
-# The actual command will be overridden in docker-compose.yml
-CMD ["rails", "server", "-b", "0.0.0.0"]
