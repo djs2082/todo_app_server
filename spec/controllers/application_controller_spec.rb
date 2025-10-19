@@ -98,7 +98,7 @@ RSpec.describe ApplicationController, type: :controller do
     end
 
     it 'allows access when token valid' do
-      token = JsonWebToken.encode({ user_id: user.id })
+      token = Authenticator.generate_access_token(user)
       request.headers['Authorization'] = "Bearer #{token}"
       get :secure
       expect(response).to have_http_status(:ok)

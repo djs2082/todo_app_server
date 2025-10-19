@@ -10,8 +10,8 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 20251012) do
-  create_table "email_templates", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+ActiveRecord::Schema[7.1].define(version: 20251019) do
+  create_table "email_templates", charset: "utf8mb3", force: :cascade do |t|
     t.string "name", null: false
     t.string "subject", null: false
     t.text "body"
@@ -20,7 +20,7 @@ ActiveRecord::Schema[7.1].define(version: 20251012) do
     t.index ["name"], name: "index_email_templates_on_name", unique: true
   end
 
-  create_table "events", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "events", charset: "utf8mb3", force: :cascade do |t|
     t.string "kind", null: false
     t.string "subject_type", null: false
     t.bigint "subject_id", null: false
@@ -36,7 +36,17 @@ ActiveRecord::Schema[7.1].define(version: 20251012) do
     t.index ["subject_type", "subject_id"], name: "index_events_on_subject_type_and_subject_id"
   end
 
-  create_table "settings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "jwt_blacklists", charset: "utf8mb3", force: :cascade do |t|
+    t.string "jti", null: false
+    t.string "token_type", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_jwt_blacklists_on_expires_at"
+    t.index ["jti"], name: "index_jwt_blacklists_on_jti", unique: true
+  end
+
+  create_table "settings", charset: "utf8mb3", force: :cascade do |t|
     t.string "configurable_type", null: false
     t.bigint "configurable_id", null: false
     t.string "key", null: false
@@ -47,7 +57,7 @@ ActiveRecord::Schema[7.1].define(version: 20251012) do
     t.index ["configurable_type", "configurable_id"], name: "index_settings_on_configurable_type_and_configurable_id"
   end
 
-  create_table "tasks", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "tasks", charset: "utf8mb3", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "title", null: false
     t.text "description"
@@ -59,7 +69,7 @@ ActiveRecord::Schema[7.1].define(version: 20251012) do
     t.index ["user_id"], name: "index_tasks_on_user_id"
   end
 
-  create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "users", charset: "utf8mb3", force: :cascade do |t|
     t.string "first_name", null: false
     t.string "last_name", null: false
     t.string "mobile"

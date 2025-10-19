@@ -9,6 +9,10 @@ class CleanupJob < ApplicationJob
     FileUtils.rm_rf(Dir[Rails.root.join('tmp', 'cache', '*')])
     
     # Example: Clean up old records
-    OldRecord.where('created_at < ?', 30.days.ago).delete_all
+    # Example: Clean up old records
+    # OldRecord.where('created_at < ?', 30.days.ago).delete_all
+
+    # Purge expired JWT blacklist entries
+    JwtBlacklist.purge_expired!
   end
 end

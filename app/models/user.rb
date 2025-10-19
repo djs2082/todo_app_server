@@ -9,6 +9,7 @@ class User < ApplicationRecord
 
   has_secure_password
   has_many :events, as: :initiator
+  has_many :tasks, dependent: :destroy
 
   validates :first_name, :last_name, :email, presence: true
   validates :email, uniqueness: true, format: { with: EMAIL_REGEX, message: 'is invalid' }
@@ -34,7 +35,7 @@ class User < ApplicationRecord
     reset_password_token.present? && reset_password_expires_at.present? && Time.current <= reset_password_expires_at
   end
 
-  def publish_forgot_password_event
+  def publish_forgot_password_event 
     publish(:user_forgot_password, self)
   end
 

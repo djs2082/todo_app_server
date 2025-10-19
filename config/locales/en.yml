@@ -40,8 +40,12 @@ en:
     reset_password_token_invalid_or_expired: "Invalid or expired reset password token"
     password_confirmation_mismatch: "Password and confirmation do not match"
     password_reset_failed: "Password reset failed"
+    refresh_token_missing: "Refresh token is missing"
+    invalid_refresh_token: "Invalid or expired refresh token"
   success:
     login_success: "Login successful"
+    logout_success: "Logout successful"
+    token_refreshed: "Access token refreshed successfully"
     account_already_activated: "Account already activated"
     account_activated: "Account activated successfully"
     forgot_password_email_sent: "If the email exists, a reset link has been sent"

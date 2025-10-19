@@ -28,14 +28,17 @@ RSpec.describe SessionsController, type: :controller do
       expect(body['message']).to eq(I18n.t('errors.invalid_email_or_password'))
     end
 
-    it 'returns token and user on success' do
+    it 'returns tokens and user on success and sets refresh cookie' do
       user
       post :create, params: { user: { email: 'jane@example.com', password: 'secret123' } }
       expect(response).to have_http_status(:ok)
       body = json_response
       expect(body['message']).to eq(I18n.t('success.login_success'))
-      expect(body['data']['token']).to be_present
+      expect(body['data']['access_token']).to be_present
+      expect(body['data']['refresh_token']).to be_present
       expect(body['data']['user']['email']).to eq('jane@example.com')
+      # Cookie for refresh token should be set
+      expect(cookies['refresh_token']).to be_present
     end
   end
 end

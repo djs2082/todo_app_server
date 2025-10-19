@@ -1,11 +1,10 @@
 class ApplicationController < ActionController::API
+	include ActionController::Cookies
 
 	private
 	def authenticate_request
-    	token = request.headers['Authorization']&.split(' ')&.last
-    	payload = JsonWebToken.decode(token)
-    	@current_user = User.find_by(id: payload[:user_id]) if payload
-    	render_failure(message: 'Not Authorized', status: :unauthorized) unless @current_user
+		@current_user = Authenticator.authenticate_request(request.headers['Authorization'])
+		render_failure(message: 'Not Authorized', status: :unauthorized) unless @current_user
 	end
 	
 	def current_user

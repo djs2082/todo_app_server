@@ -11,7 +11,7 @@ RSpec.describe PasswordsController, type: :controller do
 
     it 'generates token and sends email when email exists' do
       user = User.create!(first_name: 'Jane', last_name: 'Doe', email: 'jane@example.com', account_name: 'janedoe', password: 'secret123', password_confirmation: 'secret123')
-      mail = double('Mail::Message', deliver_later: :queued)
+      mail = double('Mail::Message', deliver_later: :queued, deliver_now: :sent)
       expect(UserMailer).to receive(:send_template_email).with(
         'jane@example.com', 'forgot_password', hash_including(:first_name, :reset_url)
       ).and_return(mail)
@@ -25,7 +25,7 @@ RSpec.describe PasswordsController, type: :controller do
 
   describe 'PUT #update (reset password)' do
     let(:user) do
-      User.create!(first_name: 'Jane', last_name: 'Doe', email: 'jane2@example.com', account_name: 'janedoe2', password: 'secret123', password_confirmation: 'secret123').tap do |u|
+      User.create!(first_name: 'Jane', last_name: 'Doe', email: 'jane2@example.com', account_name: 'janedoe2', password: 'secret123', password_confirmation: 'secret123', activated: true).tap do |u|
         u.generate_reset_password_token!(ttl: 30.minutes)
       end
     end
@@ -50,8 +50,9 @@ RSpec.describe PasswordsController, type: :controller do
     end
 
     it 'updates password and clears token, sends confirmation' do
-      mail = double('Mail::Message', deliver_later: :queued)
-      expect(UserMailer).to receive(:send_template_email).with('jane2@example.com', 'password_reset_confirmation', hash_including(:first_name)).and_return(mail)
+      mail = double('Mail::Message', deliver_later: :queued, deliver_now: :sent)
+      # Allow any other mail (e.g., activation) and assert that confirmation was sent
+      allow(UserMailer).to receive(:send_template_email).and_return(mail)
       put :update, params: { token: user.reset_password_token, password: 'newpass123', password_confirmation: 'newpass123' }
       expect(response).to have_http_status(:ok)
       body = JSON.parse(response.body)
@@ -60,6 +61,7 @@ RSpec.describe PasswordsController, type: :controller do
       expect(user.authenticate('newpass123')).to be_truthy
       expect(user.reset_password_token).to be_nil
       expect(user.reset_password_expires_at).to be_nil
+      expect(UserMailer).to have_received(:send_template_email).with('jane2@example.com', 'password_reset_confirmation', hash_including(:first_name))
     end
   end
 end

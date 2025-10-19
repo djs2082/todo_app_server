@@ -1,0 +1,9 @@
+# config for resque-scheduler
+:verbose: true
+:dynamic: true
+:queue: maintenance
+:schedule:
+  nightly_cleanup:
+    cron: "0 0 * * *"   # every day at 00:00
+    class: "CleanupJob"
+    queue: maintenance
