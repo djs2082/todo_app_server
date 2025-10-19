@@ -37,7 +37,12 @@ en:
     invalid_email_or_password: "Invalid email or password"
     user_not_activated: "Account not activated. Please check your email for the activation link."
     activation_failed: "Activation failed"
+    reset_password_token_invalid_or_expired: "Invalid or expired reset password token"
+    password_confirmation_mismatch: "Password and confirmation do not match"
+    password_reset_failed: "Password reset failed"
   success:
     login_success: "Login successful"
     account_already_activated: "Account already activated"
     account_activated: "Account activated successfully"
+    forgot_password_email_sent: "If the email exists, a reset link has been sent"
+    password_reset_success: "Password has been reset successfully"

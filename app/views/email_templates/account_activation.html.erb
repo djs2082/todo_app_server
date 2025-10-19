@@ -31,7 +31,7 @@
         <%= render 'email_templates/partials/divider' %>
         
         <!-- Security Note -->
-        <%= render 'email_templates/partials/security_note' %>
+        <%= render 'email_templates/partials/security_note', locals: { message: "If you didn't create an account with Karya, please ignore this email. Your security is our top priority." } %>
         
         <%= render 'email_templates/partials/need_help' %>
   </div>

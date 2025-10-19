@@ -15,6 +15,8 @@ Rails.application.routes.draw do
   get "/activation/failure", to: "users#activation_failure", as: :activation_failure
   post "/resend_activation", to: "users#resend_activation"
   post "/login", to: "sessions#create"
+  post "/password/forgot", to: "passwords#create"
+  put "/password/reset", to: "passwords#update"
   resources :tasks
   resources :settings, only: [:index, :create, :update, :destroy]
   get '/health', to: 'health#check'

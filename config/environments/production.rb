@@ -105,7 +105,7 @@ Rails.application.configure do
   enable_starttls_auto: true
 }
 
-config.action_mailer.default_url_options = { host: 'localhost:3000', protocol: 'http' }
+config.action_mailer.default_url_options = { host: 'api.karya-app.com', protocol: 'http' }
 config.action_mailer.asset_host = "http://api.karya-app.com"
 
 end

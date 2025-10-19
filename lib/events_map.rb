@@ -9,6 +9,8 @@ _preload_models = [
 class User < ApplicationRecord
     extend Events::Subscriber
     subscribe :user_signed_up, :send_activation_email
+    subscribe :user_forgot_password, :send_forgot_password_email
+    subscribe :user_password_updated, :send_password_updated_email
 
     def self.send_activation_email(event, user)
          return unless user
@@ -22,12 +24,42 @@ class User < ApplicationRecord
             async: false
         )
     end
+
+    def self.send_forgot_password_email(event, user)
+        return unless user
+        EmailService.send_email(
+            to: user.email,
+            template_name: 'forgot_password',
+            context: {
+                first_name: user.first_name,
+                reset_url: reset_url_for(user)
+            },
+            async: false
+        )
+    end
+
+    def self.send_password_updated_email(event, user)
+        return unless user
+        EmailService.send_email(
+            to: user.email,
+            template_name: 'password_reset_confirmation',
+            context: {
+                first_name: user.first_name
+            },
+            async: true
+        )
+    end
     
     private
 
     def self.activation_url(token)
         base = ENV.fetch('APP_BASE_URL') { 'http://localhost:8000' }
         "#{base}/activate/#{token}"
+    end
+
+    def self.reset_url_for(user)
+        base = ENV.fetch('APP_BASE_URL', 'http://localhost:8000')
+        "#{base}/reset-password/#{user.reset_password_token}"
     end
 end
 

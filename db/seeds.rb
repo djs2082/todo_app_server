@@ -14,4 +14,20 @@ EmailTemplate.find_or_create_by!(name: 'account_activation') do |t|
 		<p>If you are seeing this, the HTML template file was not used.</p>
 	HTML
 end
+
+EmailTemplate.find_or_create_by!(name: 'forgot_password') do |t|
+	t.subject = 'Reset your Karya App password'
+	t.body = <<~HTML
+		<h1>Reset Password</h1>
+		<p>If you are seeing this, the HTML template file was not used.</p>
+	HTML
+end
+
+EmailTemplate.find_or_create_by!(name: 'password_reset_confirmation') do |t|
+	t.subject = 'Your Karya App password has been reset'
+	t.body = <<~HTML
+		<h1>Password Reset</h1>
+		<p>If you are seeing this, the HTML template file was not used.</p>
+	HTML
+end
 puts 'Email templates seeded.'

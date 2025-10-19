@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 20251002) do
+ActiveRecord::Schema[7.1].define(version: 20251012) do
   create_table "email_templates", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name", null: false
     t.string "subject", null: false
@@ -71,10 +71,13 @@ ActiveRecord::Schema[7.1].define(version: 20251002) do
     t.boolean "activated", default: false, null: false
     t.string "activation_token"
     t.datetime "activated_at"
+    t.string "reset_password_token"
+    t.datetime "reset_password_expires_at"
     t.index ["account_name"], name: "index_users_on_account_name"
     t.index ["activation_token"], name: "index_users_on_activation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["mobile"], name: "index_users_on_mobile", unique: true
+    t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
   add_foreign_key "tasks", "users"

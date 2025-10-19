@@ -24,6 +24,24 @@ class User < ApplicationRecord
       { title: "User #{first_name} #{last_name} signed up", description: "A new user has created an account with email #{email}", user_id: id }
   end
 
+  def generate_reset_password_token!(ttl: 2.hours)
+    self.reset_password_token = SecureRandom.urlsafe_base64(32)
+    self.reset_password_expires_at = ttl.from_now
+    save!(validate: false)
+  end
+
+  def reset_password_token_valid?
+    reset_password_token.present? && reset_password_expires_at.present? && Time.current <= reset_password_expires_at
+  end
+
+  def publish_forgot_password_event
+    publish(:user_forgot_password, self)
+  end
+
+  def publish_password_updated_event
+    publish(:user_password_updated, self)
+  end
+
   private
 
   def normalize_mobile
@@ -37,5 +55,4 @@ class User < ApplicationRecord
   def publish_user_signed_up_event
     publish(:user_signed_up, self)
   end
-
 end
