@@ -26,6 +26,10 @@ class PasswordsController < ApplicationController
       return render_failure(message: I18n.t('errors.password_confirmation_mismatch'))
     end
 
+    unless user.activated?
+        return render_failure(message: I18n.t('errors.user_not_activated'))
+    end
+
     if user.update(password: password, password_confirmation: password_confirmation, reset_password_token: nil, reset_password_expires_at: nil)
       user.publish_password_updated_event
       render_success(message: I18n.t('success.password_reset_success'))
