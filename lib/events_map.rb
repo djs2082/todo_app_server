@@ -26,7 +26,7 @@ class User < ApplicationRecord
     private
 
     def self.activation_url(token)
-        base = ENV.fetch('WEB_APP_BASE_URL') { 'http://localhost:8000' }
+        base = ENV.fetch('APP_BASE_URL') { 'http://localhost:8000' }
         "#{base}/activate/#{token}"
     end
 end
