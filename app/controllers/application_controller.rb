@@ -2,7 +2,7 @@ class ApplicationController < ActionController::API
 	include ActionController::Cookies
 
 	private
-	def authenticate_request
+ 	def authenticate_request
 		@current_user = Authenticator.authenticate_request(request.headers['Authorization'])
 		render_failure(message: 'Not Authorized', status: :unauthorized) unless @current_user
 	end
@@ -25,5 +25,35 @@ class ApplicationController < ActionController::API
 
 	def render_unauthorized(message: "Not Authorized")
 		render json: { message: message }, status: :unauthorized
+	end
+
+	# Override to add Sentry integration
+	def rescue_with_handler(exception)
+		if defined?(Sentry)
+			Sentry.with_scope do |scope|
+				scope.set_tags(handled_by: 'controller_rescue')
+				scope.set_extras(
+					params: request.filtered_parameters,
+					path: request&.path,
+					controller: self.class.name,
+					action: action_name
+				) rescue nil
+				if respond_to?(:current_user) && current_user
+					scope.set_user(id: current_user.id, email: current_user.email) rescue nil
+				end
+			end
+			Sentry.capture_exception(exception)
+		end
+		super
+	end
+
+		# Helper for manual begin/rescue blocks in actions/services
+	def capture_exception(exception, context: {})
+		return unless defined?(Sentry)
+		Sentry.with_scope do |scope|
+			scope.set_tags(manual_capture: true)
+			scope.set_extras(context) if context.present?
+			Sentry.capture_exception(exception)
+		end
 	end
 end

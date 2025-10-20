@@ -38,6 +38,9 @@ gem "rack-cors"
 gem "jwt"
 gem 'premailer-rails'
 gem "sprockets-rails"
+gem "sentry-ruby"
+gem "sentry-rails"
+gem "sentry-resque"
 
 
 

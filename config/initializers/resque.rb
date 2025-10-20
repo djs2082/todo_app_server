@@ -2,6 +2,7 @@
 return if Rails.env.test?
 
 require 'resque'
+require 'sentry/resque'
 
 Resque.redis = ENV.fetch("REDIS_URL") { "redis://redis:6379/0" }
 
@@ -16,3 +17,8 @@ if File.exist?(schedule_file) && Resque.respond_to?(:schedule=)
 	schedule_hash = yaml.is_a?(Hash) ? (yaml['schedule'] || yaml[:schedule] || {}) : {}
 	Resque.schedule = schedule_hash
 end
+
+	# Send job failures to Sentry (without requiring the optional Multiple backend)
+	if defined?(Sentry::Resque::Failure)
+		Resque::Failure.backend = Sentry::Resque::Failure
+	end

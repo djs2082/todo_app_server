@@ -282,6 +282,15 @@ GEM
     rufus-scheduler (3.9.2)
       fugit (~> 1.1, >= 1.11.1)
     securerandom (0.3.2)
+    sentry-rails (5.28.0)
+      railties (>= 5.0)
+      sentry-ruby (~> 5.28.0)
+    sentry-resque (5.28.0)
+      resque (>= 1.24)
+      sentry-ruby (~> 5.28.0)
+    sentry-ruby (5.28.0)
+      bigdecimal
+      concurrent-ruby (~> 1.0, >= 1.0.2)
     simplecov (0.22.0)
       docile (~> 1.1)
       simplecov-html (~> 0.11)
@@ -347,6 +356,9 @@ DEPENDENCIES
   resque (~> 2.0)
   resque-scheduler (~> 4.11)
   rspec-rails (~> 6.1)
+  sentry-rails
+  sentry-resque
+  sentry-ruby
   simplecov
   sprockets-rails
   sqlite3 (~> 1.4)
