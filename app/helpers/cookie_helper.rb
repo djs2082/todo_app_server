@@ -4,11 +4,11 @@ module CookieHelper
       {
         domain: '.karya-app.com',
         secure: true,
-        same_site: :none
+        same_site: :lax
       }
     else
       {
-        domain: '.lvh.me', # works with lvh.me for local subdomains
+        domain: 'localhost', # works with lvh.me for local subdomains
         secure: false,
         same_site: :none
       }
