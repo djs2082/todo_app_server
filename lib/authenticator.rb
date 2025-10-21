@@ -1,5 +1,7 @@
 class Authenticator
   class << self
+    include CookieHelper
+
     def access_token_ttl
       seconds = ENV.fetch('ACCESS_TOKEN_TTL_SECONDS', '900').to_i
       seconds.seconds
@@ -83,10 +85,8 @@ class Authenticator
       cookies[:refresh_token] = {
         value: refresh_token,
         httponly: true,
-        secure: Rails.env.production?, 
-        same_site: :lax,
         expires: refresh_token_ttl.from_now
-      }
+      }.merge(cookie_options)
     end
 
     def clear_refresh_token_cookie(cookies)
