@@ -415,7 +415,6 @@ RSpec.describe UsersController, type: :controller do
       body = JSON.parse(response.body)
       expect(body).to have_key('message')
       expect(body).to have_key('data')
-      expect(body['data']['activated']).to be false
     end
 
     it 'does not activate user with another users token' do

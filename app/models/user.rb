@@ -16,14 +16,13 @@ class User < ApplicationRecord
   has_many :tasks, dependent: :destroy
   has_many :settings, as: :configurable, dependent: :destroy
 
-  validates :first_name, :last_name, :email, presence: true
+  validates :first_name, :last_name, :email, :account_name, presence: true
   validates :email, uniqueness: true, format: { with: EMAIL_REGEX, message: 'is invalid' }
+  validates :account_name, uniqueness: true
 
   before_validation :normalize_mobile
   before_create :set_activation_fields
   after_commit :publish_user_signed_up_event, on: :create
-  # When signin_count changes (i.e., a successful login), emit sign-in events
-  after_update_commit :emit_sign_in_events
 
   validates :mobile, format: { with: MOBILE_REGEX, message: "must start with + and country code" }, allow_nil: true
   validates :mobile, uniqueness: true, allow_nil: true
@@ -50,14 +49,28 @@ class User < ApplicationRecord
     publish(:user_password_updated, self)
   end
 
-  # Called on each successful sign in
+  # Public: One-shot helper to record a successful sign-in.
+  # - increments signin_count
+  # - sets last_singin_at
+  # - publishes sign-in events (including first sign-in when applicable)
+  def record_successful_sign_in!
+    previous = self.signin_count.to_i
+    # Persist the new count first
+    update!(signin_count: previous + 1)
+    # Update timestamp without triggering callbacks again
+    update_columns(last_singin_at: Time.current)
+    # Publish events
+    publish(:user_signed_in, self)
+    publish(:user_first_sign_in, self) if previous == 0
+  end
+
+  # Called on each successful sign in (kept for backward-compatibility)
   def user_signed_in
-    # Update last_singin_at timestamp
-    update_column(:last_singin_at, Time.current)
+    update_columns(last_singin_at: Time.current)
     publish(:user_signed_in, self)
   end
 
-  # Called only on the first ever sign in
+  # Called only on the first ever sign in (kept for backward-compatibility)
   def user_first_sign_in
     publish(:user_first_sign_in, self)
   end
@@ -76,14 +89,5 @@ class User < ApplicationRecord
     publish(:user_signed_up, self)
   end
 
-  def emit_sign_in_events
-    # Try to fetch change from previous_changes (available after commit), fallback to saved_change_to_* if present
-    change = previous_changes['signin_count'] || saved_change_to_signin_count
-    return unless change
-    previous = Array(change).first.to_i
-
-    # Update last sign-in and publish events
-    user_signed_in
-    user_first_sign_in if previous == 0
-  end
+  # Removed callback-based emission in favor of explicit method for reliability
 end

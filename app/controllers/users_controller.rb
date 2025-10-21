@@ -28,11 +28,11 @@ class UsersController < ApplicationController
   end
 
   def activate
-    token = params[:data][:activation_code].to_s.strip
-    return render_failure(message: I18n.t("errors.activation_token_missing", data: { activated: false })) if token.blank?
+  token = params.dig(:data, :activation_code).to_s.strip
+  return render_failure(message: I18n.t("errors.activation_token_missing", data: { activated: false }), data: { activated: false }) if token.blank?
 
-    user = User.find_by(activation_token: token)
-    return render_failure(message: I18n.t("errors.activation_token_missing", data: { activated: false })) unless user
+  user = User.find_by(activation_token: token)
+  return render_failure(message: I18n.t("errors.activation_token_missing", data: { activated: false }), data: { activated: false }) unless user
 
     if user.activated?
       return render_success(message: I18n.t("success.account_already_activated"), data: { already: true })

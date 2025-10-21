@@ -281,37 +281,54 @@ RSpec.describe User, type: :model do
     end
   end
 
-  describe '#emit_sign_in_events callback' do
-    it 'calls user_signed_in when signin_count changes' do
+  describe '#record_successful_sign_in!' do
+    it 'increments count, sets last_singin_at, and publishes both events on first sign-in' do
       user = described_class.create!(base_attrs.merge(signin_count: 0))
-      expect(user).to receive(:user_signed_in)
+
+      freeze_time = Time.current
+      allow(Time).to receive(:current).and_return(freeze_time)
+
+      expect(user).to receive(:publish).with(:user_signed_in, user)
+      expect(user).to receive(:publish).with(:user_first_sign_in, user)
+
+      user.record_successful_sign_in!
+
+      user.reload
+      expect(user.signin_count).to eq(1)
+      expect(user.last_singin_at).to be_within(1.second).of(freeze_time)
+    end
+
+    it 'on subsequent sign-ins publishes only user_signed_in and updates timestamp' do
+      user = described_class.create!(base_attrs.merge(signin_count: 1, last_singin_at: 1.day.ago))
+
+      later = Time.current + 5.seconds
+      allow(Time).to receive(:current).and_return(later)
+
+      expect(user).to receive(:publish).with(:user_signed_in, user)
+      expect(user).not_to receive(:publish).with(:user_first_sign_in, user)
+
+      user.record_successful_sign_in!
+
+      user.reload
+      expect(user.signin_count).to eq(2)
+      expect(user.last_singin_at).to be_within(1.second).of(later)
+    end
+  end
+
+  describe 'signin_count tracking' do
+    it 'defaults signin_count to 0 or nil' do
+      user = described_class.create!(base_attrs)
+      expect(user.signin_count).to be_nil.or eq(0)
+    end
+
+    it 'can be incremented' do
+      user = described_class.create!(base_attrs)
       user.update!(signin_count: 1)
+      expect(user.signin_count).to eq(1)
     end
 
-    it 'calls user_first_sign_in when signin_count changes from 0 to 1' do
+    it 'increment! changes the count (no events implied)' do
       user = described_class.create!(base_attrs.merge(signin_count: 0))
-      expect(user).to receive(:user_signed_in)
-      expect(user).to receive(:user_first_sign_in)
-      user.update!(signin_count: 1)
-    end
-
-    it 'does not call user_first_sign_in when signin_count changes from 1 to 2' do
-      user = described_class.create!(base_attrs.merge(signin_count: 1))
-      expect(user).to receive(:user_signed_in)
-      expect(user).not_to receive(:user_first_sign_in)
-      user.update!(signin_count: 2)
-    end
-
-    it 'does not trigger events when signin_count does not change' do
-      user = described_class.create!(base_attrs.merge(signin_count: 5))
-      expect(user).not_to receive(:user_signed_in)
-      expect(user).not_to receive(:user_first_sign_in)
-      user.update!(first_name: 'Changed')
-    end
-
-    it 'handles increment! correctly' do
-      user = described_class.create!(base_attrs.merge(signin_count: 0))
-      # increment! bypasses callbacks in some Rails versions, just verify count changes
       expect { user.increment!(:signin_count) }.to change { user.reload.signin_count }.by(1)
     end
   end
@@ -363,11 +380,10 @@ RSpec.describe User, type: :model do
   end
 
   describe 'account_name' do
-    it 'is optional on user model (no presence validation in model)' do
+    it 'requires presence at model level' do
       user = described_class.new(base_attrs.except(:account_name))
-      # Account name validation may be at database level or controller level, not model
-      # If the model is valid without it, this test passes
-      expect(user.valid? || user.errors[:account_name].empty?).to be_truthy
+      expect(user).not_to be_valid
+      expect(user.errors[:account_name]).to include("can't be blank")
     end
 
     it 'allows different account names for different users' do

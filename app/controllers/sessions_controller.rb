@@ -5,8 +5,8 @@ class SessionsController < ApplicationController
     return render_unauthorized(message: I18n.t("errors.user_not_activated")) unless user&.activated?
     
     if user&.authenticate(login_params[:password])
-  # Increment sign-in count on successful authentication (model callback will emit events)
-      user.increment!(:signin_count)
+      # Record full sign-in effects (count, timestamp, events)
+      user.record_successful_sign_in!
       tokens = Authenticator.generate_token_pair(user)
       
       Authenticator.set_refresh_token_cookie(response, cookies, tokens[:refresh_token])

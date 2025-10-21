@@ -19,9 +19,11 @@ class ApplicationController < ActionController::API
 		render json: { message: message, data: data }, status: :created
 	end
 
-	def render_failure(message: "Failure", errors: [], status: :unprocessable_entity)
-		render json: { message: message, errors: errors }, status: status
-	end
+		def render_failure(message: "Failure", errors: [], status: :unprocessable_entity, data: nil)
+			payload = { message: message, errors: errors }
+			payload[:data] = data unless data.nil?
+			render json: payload, status: status
+		end
 
 	def render_unauthorized(message: "Not Authorized")
 		render json: { message: message }, status: :unauthorized
