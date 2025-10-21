@@ -18,7 +18,6 @@ class User < ApplicationRecord
 
   validates :first_name, :last_name, :email, :account_name, presence: true
   validates :email, uniqueness: true, format: { with: EMAIL_REGEX, message: 'is invalid' }
-  validates :account_name, uniqueness: true
 
   before_validation :normalize_mobile
   before_create :set_activation_fields
