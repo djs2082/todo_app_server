@@ -21,7 +21,7 @@ class SettingsController < ApplicationController
   # PATCH/PUT /settings/:id
   def update
     setting = Setting.find(params[:id])
-    if setting.update(update_params)
+    if setting.update(value: params[:data][:value])
       render json: { id: setting.id, key: setting.key, value: setting.value }
     else
       render json: { errors: setting.errors.full_messages }, status: :unprocessable_entity

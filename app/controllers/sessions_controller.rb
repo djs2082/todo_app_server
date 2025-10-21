@@ -5,6 +5,8 @@ class SessionsController < ApplicationController
     return render_unauthorized(message: I18n.t("errors.user_not_activated")) unless user&.activated?
     
     if user&.authenticate(login_params[:password])
+  # Increment sign-in count on successful authentication (model callback will emit events)
+      user.increment!(:signin_count)
       tokens = Authenticator.generate_token_pair(user)
       
       Authenticator.set_refresh_token_cookie(response, cookies, tokens[:refresh_token])
@@ -14,16 +16,13 @@ class SessionsController < ApplicationController
         firstName: user.first_name,
         lastName: user.last_name,
         email: user.email,
-        accountName: user.account_name
+        accountName: user.account_name,
       }
 
       render_success(
         message: I18n.t("success.login_success"), 
-        data: { 
-          access_token: tokens[:access_token],
-          refresh_token: tokens[:refresh_token],
-          user: user_payload
-        }
+        data: { user: UserRepresenter.render(user) ,
+        access_token: tokens[:access_token]}
       )
     else
       render_unauthorized(message: I18n.t("errors.invalid_email_or_password"))
@@ -63,7 +62,7 @@ class SessionsController < ApplicationController
       end
     end
 
-    Authenticator.clear_refresh_token_cookie(cookies)
+    Authenticator.clear_refresh_token_cookie(response, cookies)
     render_success(message: I18n.t("success.logout_success"))
   end
 

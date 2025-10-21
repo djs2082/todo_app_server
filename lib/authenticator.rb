@@ -90,7 +90,7 @@ class Authenticator
     end
 
     def clear_refresh_token_cookie(cookies)
-      cookies.delete(:refresh_token)
+      response.delete_cookie(:refresh_token)
     end
 
     def get_refresh_token_from_cookies(cookies)

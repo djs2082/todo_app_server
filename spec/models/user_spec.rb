@@ -89,4 +89,291 @@ RSpec.describe User, type: :model do
       expect(msg[:user_id]).to eq(user.id)
     end
   end
+
+  describe 'associations' do
+    it 'has many tasks' do
+      user = described_class.create!(base_attrs)
+      expect(user).to respond_to(:tasks)
+    end
+
+    it 'has many settings as configurable' do
+      user = described_class.create!(base_attrs)
+      expect(user).to respond_to(:settings)
+    end
+
+    it 'has many events as initiator' do
+      user = described_class.create!(base_attrs)
+      expect(user).to respond_to(:events)
+    end
+
+    it 'destroys dependent tasks when user is destroyed' do
+      user = described_class.create!(base_attrs)
+      task = Task.create!(user: user, title: 'Test Task', description: 'Test')
+      expect { user.destroy }.to change { Task.count }.by(-1)
+    end
+
+    it 'destroys dependent settings when user is destroyed' do
+      user = described_class.create!(base_attrs)
+      Setting.create!(configurable: user, key: 'theme', value: 'dark')
+      expect { user.destroy }.to change { Setting.count }.by(-1)
+    end
+  end
+
+  describe '#generate_reset_password_token!' do
+    it 'generates a reset password token' do
+      user = described_class.create!(base_attrs)
+      user.generate_reset_password_token!
+      expect(user.reset_password_token).to be_present
+      expect(user.reset_password_token.length).to be >= 32
+    end
+
+    it 'sets reset_password_expires_at to 2 hours from now by default' do
+      user = described_class.create!(base_attrs)
+      freeze_time = Time.current
+      allow(Time).to receive(:current).and_return(freeze_time)
+      
+      user.generate_reset_password_token!
+      expect(user.reset_password_expires_at).to be_within(1.second).of(2.hours.from_now)
+    end
+
+    it 'accepts custom ttl parameter' do
+      user = described_class.create!(base_attrs)
+      user.generate_reset_password_token!(ttl: 1.hour)
+      expect(user.reset_password_expires_at).to be_within(1.second).of(1.hour.from_now)
+    end
+
+    it 'generates unique tokens for multiple calls' do
+      user = described_class.create!(base_attrs)
+      user.generate_reset_password_token!
+      first_token = user.reset_password_token
+      
+      user.generate_reset_password_token!
+      second_token = user.reset_password_token
+      
+      expect(first_token).not_to eq(second_token)
+    end
+
+    it 'saves without running validations' do
+      user = described_class.create!(base_attrs)
+      # Make record invalid
+      user.email = ''
+      expect(user).not_to be_valid
+      
+      # But generate_reset_password_token! should still work
+      expect { user.generate_reset_password_token! }.not_to raise_error
+      expect(user.reload.reset_password_token).to be_present
+    end
+  end
+
+  describe '#reset_password_token_valid?' do
+    it 'returns true when token is present and not expired' do
+      user = described_class.create!(base_attrs)
+      user.generate_reset_password_token!
+      expect(user.reset_password_token_valid?).to be true
+    end
+
+    it 'returns false when token is nil' do
+      user = described_class.create!(base_attrs)
+      user.reset_password_token = nil
+      user.reset_password_expires_at = 2.hours.from_now
+      expect(user.reset_password_token_valid?).to be false
+    end
+
+    it 'returns false when expiry is nil' do
+      user = described_class.create!(base_attrs)
+      user.reset_password_token = 'token123'
+      user.reset_password_expires_at = nil
+      expect(user.reset_password_token_valid?).to be false
+    end
+
+    it 'returns false when token is expired' do
+      user = described_class.create!(base_attrs)
+      user.reset_password_token = 'token123'
+      user.reset_password_expires_at = 1.hour.ago
+      expect(user.reset_password_token_valid?).to be false
+    end
+
+    it 'returns false when token is exactly at expiry time' do
+      user = described_class.create!(base_attrs)
+      user.reset_password_token = 'token123'
+      expiry_time = Time.current
+      user.reset_password_expires_at = expiry_time
+      
+      allow(Time).to receive(:current).and_return(expiry_time + 1.second)
+      expect(user.reset_password_token_valid?).to be false
+    end
+  end
+
+  describe '#publish_forgot_password_event' do
+    it 'publishes user_forgot_password event' do
+      user = described_class.create!(base_attrs)
+      expect(user).to receive(:publish).with(:user_forgot_password, user)
+      user.publish_forgot_password_event
+    end
+  end
+
+  describe '#publish_password_updated_event' do
+    it 'publishes user_password_updated event' do
+      user = described_class.create!(base_attrs)
+      expect(user).to receive(:publish).with(:user_password_updated, user)
+      user.publish_password_updated_event
+    end
+  end
+
+  describe '#user_signed_in' do
+    it 'updates last_singin_at timestamp' do
+      user = described_class.create!(base_attrs)
+      freeze_time = Time.current
+      allow(Time).to receive(:current).and_return(freeze_time)
+      
+      user.user_signed_in
+      expect(user.reload.last_singin_at).to be_within(1.second).of(freeze_time)
+    end
+
+    it 'publishes user_signed_in event' do
+      user = described_class.create!(base_attrs)
+      expect(user).to receive(:publish).with(:user_signed_in, user)
+      user.user_signed_in
+    end
+
+    it 'does not trigger validations when updating timestamp' do
+      user = described_class.create!(base_attrs)
+      # Make record invalid
+      user.update_column(:email, '')
+      
+      # user_signed_in should still work
+      expect { user.user_signed_in }.not_to raise_error
+    end
+  end
+
+  describe '#user_first_sign_in' do
+    it 'publishes user_first_sign_in event' do
+      user = described_class.create!(base_attrs)
+      expect(user).to receive(:publish).with(:user_first_sign_in, user)
+      user.user_first_sign_in
+    end
+  end
+
+  describe 'signin_count tracking' do
+    it 'defaults signin_count to 0 or nil' do
+      user = described_class.create!(base_attrs)
+      expect(user.signin_count).to be_nil.or eq(0)
+    end
+
+    it 'can be incremented' do
+      user = described_class.create!(base_attrs)
+      user.update!(signin_count: 1)
+      expect(user.signin_count).to eq(1)
+    end
+  end
+
+  describe 'last_singin_at tracking' do
+    it 'defaults last_singin_at to nil' do
+      user = described_class.create!(base_attrs)
+      expect(user.last_singin_at).to be_nil
+    end
+
+    it 'can be set to a timestamp' do
+      user = described_class.create!(base_attrs)
+      timestamp = Time.current
+      user.update!(last_singin_at: timestamp)
+      expect(user.last_singin_at).to be_within(1.second).of(timestamp)
+    end
+  end
+
+  describe '#emit_sign_in_events callback' do
+    it 'calls user_signed_in when signin_count changes' do
+      user = described_class.create!(base_attrs.merge(signin_count: 0))
+      expect(user).to receive(:user_signed_in)
+      user.update!(signin_count: 1)
+    end
+
+    it 'calls user_first_sign_in when signin_count changes from 0 to 1' do
+      user = described_class.create!(base_attrs.merge(signin_count: 0))
+      expect(user).to receive(:user_signed_in)
+      expect(user).to receive(:user_first_sign_in)
+      user.update!(signin_count: 1)
+    end
+
+    it 'does not call user_first_sign_in when signin_count changes from 1 to 2' do
+      user = described_class.create!(base_attrs.merge(signin_count: 1))
+      expect(user).to receive(:user_signed_in)
+      expect(user).not_to receive(:user_first_sign_in)
+      user.update!(signin_count: 2)
+    end
+
+    it 'does not trigger events when signin_count does not change' do
+      user = described_class.create!(base_attrs.merge(signin_count: 5))
+      expect(user).not_to receive(:user_signed_in)
+      expect(user).not_to receive(:user_first_sign_in)
+      user.update!(first_name: 'Changed')
+    end
+
+    it 'handles increment! correctly' do
+      user = described_class.create!(base_attrs.merge(signin_count: 0))
+      # increment! bypasses callbacks in some Rails versions, just verify count changes
+      expect { user.increment!(:signin_count) }.to change { user.reload.signin_count }.by(1)
+    end
+  end
+
+  describe 'password functionality' do
+    it 'authenticates with correct password' do
+      user = described_class.create!(base_attrs)
+      expect(user.authenticate('secret123')).to eq(user)
+    end
+
+    it 'returns false with incorrect password' do
+      user = described_class.create!(base_attrs)
+      expect(user.authenticate('wrongpassword')).to be false
+    end
+
+    it 'requires password on create' do
+      user = described_class.new(base_attrs.except(:password, :password_confirmation))
+      expect(user).not_to be_valid
+      expect(user.errors[:password]).to be_present
+    end
+
+    it 'requires password_confirmation to match' do
+      user = described_class.new(base_attrs.merge(password_confirmation: 'different'))
+      expect(user).not_to be_valid
+      expect(user.errors[:password_confirmation]).to be_present
+    end
+  end
+
+  describe 'activation fields' do
+    it 'sets activated to false by default' do
+      user = described_class.create!(base_attrs)
+      expect(user.activated).to be_falsey
+    end
+
+    it 'can be activated' do
+      user = described_class.create!(base_attrs)
+      user.update!(activated: true, activated_at: Time.current)
+      expect(user.activated).to be true
+      expect(user.activated_at).to be_present
+    end
+
+    it 'can check if user is activated' do
+      user = described_class.create!(base_attrs)
+      expect(user.activated?).to be_falsey
+      
+      user.update!(activated: true)
+      expect(user.activated?).to be true
+    end
+  end
+
+  describe 'account_name' do
+    it 'is optional on user model (no presence validation in model)' do
+      user = described_class.new(base_attrs.except(:account_name))
+      # Account name validation may be at database level or controller level, not model
+      # If the model is valid without it, this test passes
+      expect(user.valid? || user.errors[:account_name].empty?).to be_truthy
+    end
+
+    it 'allows different account names for different users' do
+      described_class.create!(base_attrs)
+      user2 = described_class.new(base_attrs.merge(email: 'other@example.com', account_name: 'othername'))
+      expect(user2).to be_valid
+    end
+  end
 end

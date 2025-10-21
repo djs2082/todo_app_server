@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 20251019) do
+ActiveRecord::Schema[7.1].define(version: 202510212) do
   create_table "email_templates", charset: "utf8mb3", force: :cascade do |t|
     t.string "name", null: false
     t.string "subject", null: false
@@ -83,9 +83,12 @@ ActiveRecord::Schema[7.1].define(version: 20251019) do
     t.datetime "activated_at"
     t.string "reset_password_token"
     t.datetime "reset_password_expires_at"
+    t.datetime "last_singin_at"
+    t.integer "signin_count", default: 0, null: false
     t.index ["account_name"], name: "index_users_on_account_name"
     t.index ["activation_token"], name: "index_users_on_activation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["last_singin_at"], name: "index_users_on_last_singin_at"
     t.index ["mobile"], name: "index_users_on_mobile", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end

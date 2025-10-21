@@ -11,6 +11,7 @@ class User < ApplicationRecord
     subscribe :user_signed_up, :send_activation_email
     subscribe :user_forgot_password, :send_forgot_password_email
     subscribe :user_password_updated, :send_password_updated_email
+    subscribe :user_first_sign_in, :update_relevant_settings
 
     def self.send_activation_email(event, user)
          return unless user
@@ -49,11 +50,20 @@ class User < ApplicationRecord
             async: true
         )
     end
+
+    def self.update_relevant_settings(event, user)
+        return unless user
+
+        Rails.logger.info("User #{user.id} has signed in for the first time. Update settings as needed.")
+        User.DEFAULT_SETTINGS_AND_PREFERENCES.each do |key, value|
+            user.settings.create!(key: key, value: value)
+        end
+    end
     
     private
 
     def self.activation_url(token)
-        base = ENV.fetch('APP_BASE_URL') { 'http://localhost:8000' }
+        base = ENV.fetch('WEB_APP_BASE_URL', ENV.fetch('APP_BASE_URL', 'http://localhost:8000'))
         "#{base}/activate/#{token}"
     end
 

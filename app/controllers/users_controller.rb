@@ -19,6 +19,14 @@ class UsersController < ApplicationController
     render json: users.as_json(only: [:id, :first_name, :last_name, :mobile, :email, :account_name, :created_at])
   end
 
+  def show
+    user = User.find_by(id: params[:id])
+    unless user
+      return render_failure(message: I18n.t('errors.user_not_found', default: 'User not found'), status: :not_found)
+    end
+    render json: ::UserRepresenter.render(user)
+  end
+
   def activate
     token = params[:data][:activation_code].to_s.strip
     return render_failure(message: I18n.t("errors.activation_token_missing", data: { activated: false })) if token.blank?
