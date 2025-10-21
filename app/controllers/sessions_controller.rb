@@ -7,7 +7,7 @@ class SessionsController < ApplicationController
     if user&.authenticate(login_params[:password])
       tokens = Authenticator.generate_token_pair(user)
       
-      Authenticator.set_refresh_token_cookie(cookies, tokens[:refresh_token])
+      Authenticator.set_refresh_token_cookie(response, cookies, tokens[:refresh_token])
       
       user_payload = {
         id: user.id,

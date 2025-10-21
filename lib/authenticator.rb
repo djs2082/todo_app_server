@@ -81,12 +81,12 @@ class Authenticator
       JwtBlacklist.active.exists?(jti: jti)
     end
 
-    def set_refresh_token_cookie(cookies, refresh_token)
-      cookies[:refresh_token] = {
+    def set_refresh_token_cookie(response, cookies, refresh_token)
+      response.set_cookie(:refresh_token, {
         value: refresh_token,
         httponly: true,
         expires: refresh_token_ttl.from_now
-      }.merge(cookie_options)
+      }.merge(cookie_options))
     end
 
     def clear_refresh_token_cookie(cookies)
