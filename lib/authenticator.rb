@@ -89,7 +89,7 @@ class Authenticator
       }.merge(cookie_options))
     end
 
-    def clear_refresh_token_cookie(cookies)
+    def clear_refresh_token_cookie(response, cookies)
       response.delete_cookie(:refresh_token)
     end
 

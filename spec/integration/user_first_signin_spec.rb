@@ -286,10 +286,10 @@ RSpec.describe 'User First Sign-in Integration', type: :request do
       db_settings = Setting.where(configurable_type: 'User', configurable_id: user.id)
       expect(db_settings.count).to eq(User::DEFAULT_SETTINGS_AND_PREFERENCES.size)
 
-      User::DEFAULT_SETTINGS_AND_PREFERENCES.each do |key, value|
-        db_setting = db_settings.find_by(key: key.to_s)
+      User::DEFAULT_SETTINGS_AND_PREFERENCES.each do |setting|
+            db_setting = db_settings.find_by(key: setting[:key].to_s)
         expect(db_setting).to be_present
-        expect(db_setting.value).to eq(value.to_s)
+        expect(db_setting.value).to eq(setting[:value].to_s)
       end
     end
   end

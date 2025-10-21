@@ -5,9 +5,10 @@ class User < ApplicationRecord
   # Examples: +18989898989, +919090909090
   MOBILE_REGEX = /\A\+[1-9]\d{9,14}\z/
 
-  DEFAULT_SETTINGS_AND_PREFERENCES = {
-    theme: 'light',
-  }
+  DEFAULT_SETTINGS_AND_PREFERENCES = [{
+    key: 'theme',
+    value: 'light',
+  }]
 
   include Events::Publisher
 

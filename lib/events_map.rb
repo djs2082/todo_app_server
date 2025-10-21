@@ -55,8 +55,8 @@ class User < ApplicationRecord
         return unless user
 
         Rails.logger.info("User #{user.id} has signed in for the first time. Update settings as needed.")
-        User.DEFAULT_SETTINGS_AND_PREFERENCES.each do |key, value|
-            user.settings.create!(key: key, value: value)
+        User::DEFAULT_SETTINGS_AND_PREFERENCES.each do |setting|
+            user.settings.create!(key: setting[:key], value: setting[:value])
         end
     end
     
