@@ -20,7 +20,26 @@ Rails.application.routes.draw do
   post "/logout", to: "sessions#destroy"
   post "/password/forgot", to: "passwords#create"
   put "/password/reset", to: "passwords#update"
-  resources :tasks
+  resources :tasks do
+      member do
+      # Task state management
+      post :start
+      post :complete
+      
+      # Pause management
+      post :pause
+      post :resume
+      
+      # Pause analytics
+      get :pause_history
+      get :pause_stats
+      
+      # Events and timeline
+      get :events
+      get :snapshots
+      get :timeline
+    end
+  end
   resources :settings, only: [:index, :create, :update, :destroy]
   get '/health', to: 'health#check'
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 202510212) do
+ActiveRecord::Schema[7.1].define(version: 202510265) do
   create_table "email_templates", charset: "utf8mb3", force: :cascade do |t|
     t.string "name", null: false
     t.string "subject", null: false
@@ -57,15 +57,65 @@ ActiveRecord::Schema[7.1].define(version: 202510212) do
     t.index ["configurable_type", "configurable_id"], name: "index_settings_on_configurable_type_and_configurable_id"
   end
 
+  create_table "task_events", charset: "utf8mb3", force: :cascade do |t|
+    t.bigint "task_id", null: false
+    t.string "eventable_type", null: false
+    t.bigint "eventable_id", null: false
+    t.string "event_type", null: false
+    t.json "metadata"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_type"], name: "index_task_events_on_event_type"
+    t.index ["eventable_type", "eventable_id"], name: "index_task_events_on_eventable"
+    t.index ["eventable_type", "eventable_id"], name: "index_task_events_on_eventable_type_and_eventable_id"
+    t.index ["task_id", "created_at"], name: "index_task_events_on_task_id_and_created_at"
+    t.index ["task_id"], name: "index_task_events_on_task_id"
+  end
+
+  create_table "task_pauses", charset: "utf8mb3", force: :cascade do |t|
+    t.bigint "task_id", null: false
+    t.datetime "paused_at", null: false
+    t.datetime "resumed_at"
+    t.integer "work_duration", default: 0
+    t.string "reason"
+    t.text "comment"
+    t.integer "progress_percentage", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["reason"], name: "index_task_pauses_on_reason"
+    t.index ["task_id", "paused_at"], name: "index_task_pauses_on_task_id_and_paused_at"
+    t.index ["task_id"], name: "index_task_pauses_on_task_id"
+  end
+
+  create_table "task_snapshots", charset: "utf8mb3", force: :cascade do |t|
+    t.bigint "task_id", null: false
+    t.string "snapshotable_type", null: false
+    t.bigint "snapshotable_id", null: false
+    t.string "snapshot_type", null: false
+    t.json "state_data"
+    t.integer "progress_at_snapshot"
+    t.integer "total_time_at_snapshot"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["snapshotable_type", "snapshotable_id"], name: "index_task_snapshots_on_snapshotable"
+    t.index ["task_id", "created_at"], name: "index_task_snapshots_on_task_id_and_created_at"
+    t.index ["task_id"], name: "index_task_snapshots_on_task_id"
+  end
+
   create_table "tasks", charset: "utf8mb3", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "title", null: false
     t.text "description"
     t.integer "priority"
-    t.date "due_date"
-    t.time "due_time"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "due_date_time"
+    t.integer "status", default: 0, null: false
+    t.integer "total_working_time", default: 0, null: false
+    t.datetime "started_at"
+    t.datetime "last_resumed_at"
+    t.index ["due_date_time"], name: "index_tasks_on_due_date_time"
+    t.index ["status"], name: "index_tasks_on_status"
     t.index ["user_id"], name: "index_tasks_on_user_id"
   end
 
@@ -93,5 +143,8 @@ ActiveRecord::Schema[7.1].define(version: 202510212) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "task_events", "tasks"
+  add_foreign_key "task_pauses", "tasks"
+  add_foreign_key "task_snapshots", "tasks"
   add_foreign_key "tasks", "users"
 end
