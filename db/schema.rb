@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 202510265) do
+ActiveRecord::Schema[7.1].define(version: 202510266) do
   create_table "email_templates", charset: "utf8mb3", force: :cascade do |t|
     t.string "name", null: false
     t.string "subject", null: false

@@ -54,7 +54,7 @@ class TasksController < ApplicationController
 
     pause_service = TaskPauseService.new(@task)
     pause = pause_service.pause(
-      reason: pause_params[:reason],
+      reason: pause_params[:reason],    
       comment: pause_params[:comment],
       progress: pause_params[:progress]
     )

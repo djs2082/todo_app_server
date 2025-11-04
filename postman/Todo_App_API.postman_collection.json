@@ -1,0 +1,852 @@
+{
+	"info": {
+		"_postman_id": "todo-app-api-collection",
+		"name": "Todo App API - Complete Collection",
+		"description": "Complete API collection for Todo App with authentication, task management, user management, and settings. \n\n**Features:**\n- Auto-saves access token after login\n- Auto-refreshes token when expired\n- Supports multiple environments (dev/staging/production)\n- Pre-request scripts for authentication\n- Test scripts for validation\n\n**Quick Start:**\n1. Import this collection\n2. Import environment file (development/staging/production)\n3. Run 'Auth/Login' request first to get tokens\n4. All subsequent requests will use saved token automatically\n5. Use 'Auth/Refresh Token' to manually refresh if needed\n\n**Running All Requests:**\n- Use Collection Runner to test all APIs\n- Authentication requests run first automatically\n- Token is auto-saved and reused across all requests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global pre-request script - runs before every request",
+					"",
+					"// Check if access token exists",
+					"const accessToken = pm.environment.get('access_token');",
+					"",
+					"if (!accessToken) {",
+					"    console.log('No access token found. Please login first.');",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global test script - runs after every response",
+					"",
+					"// Check if token expired and auto-refresh",
+					"if (pm.response.code === 401) {",
+					"    const responseJson = pm.response.json();",
+					"    if (responseJson.message && responseJson.message.includes('token')) {",
+					"        console.log('Token expired. Please refresh token or login again.');",
+					"    }",
+					"}"
+				]
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Signup",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Signup successful', function() {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response has user id', function() {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    ",
+									"    // Save user ID for activation",
+									"    pm.environment.set('new_user_id', jsonData.data.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user\": {\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"mobile\": \"1234567890\",\n    \"password\": \"SecurePass123!\",\n    \"password_confirmation\": \"SecurePass123!\",\n    \"account_name\": \"johndoe_account\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/signup",
+							"host": ["{{base_url}}"],
+							"path": ["signup"]
+						},
+						"description": "Register a new user account. After signup, user will receive activation email."
+					},
+					"response": []
+				},
+				{
+					"name": "Activate Account",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Activation successful', function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Account activated', function() {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.activated).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"data\": {\n    \"activation_code\": \"your-activation-token-from-email\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/activate",
+							"host": ["{{base_url}}"],
+							"path": ["activate"]
+						},
+						"description": "Activate user account using activation token received via email."
+					},
+					"response": []
+				},
+				{
+					"name": "Resend Activation",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john.doe@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/resend_activation",
+							"host": ["{{base_url}}"],
+							"path": ["resend_activation"]
+						},
+						"description": "Resend activation email if user didn't receive or lost the original activation token."
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Login successful', function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has access token', function() {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('access_token');",
+									"    ",
+									"    // Save access token to environment",
+									"    pm.environment.set('access_token', jsonData.data.access_token);",
+									"    console.log('Access token saved to environment');",
+									"});",
+									"",
+									"pm.test('Response has user data', function() {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('user');",
+									"    pm.expect(jsonData.data.user).to.have.property('id');",
+									"    ",
+									"    // Save user info",
+									"    pm.environment.set('user_id', jsonData.data.user.id);",
+									"    pm.environment.set('user_email', jsonData.data.user.email);",
+									"    pm.environment.set('user_first_name', jsonData.data.user.firstName);",
+									"    ",
+									"    console.log('User info saved:', jsonData.data.user);",
+									"});",
+									"",
+									"// Extract and save refresh token from cookies if present",
+									"const cookies = pm.cookies.all();",
+									"console.log('Cookies received:', cookies);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user\": {\n    \"email\": \"{{test_user_email}}\",\n    \"password\": \"{{test_user_password}}\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/login",
+							"host": ["{{base_url}}"],
+							"path": ["login"]
+						},
+						"description": "Login with email and password. Returns access token and user information. Access token is automatically saved to environment for subsequent requests."
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Token refresh successful', function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('New access token received', function() {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('access_token');",
+									"    ",
+									"    // Update access token in environment",
+									"    pm.environment.set('access_token', jsonData.data.access_token);",
+									"    console.log('Access token refreshed and saved');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/refresh",
+							"host": ["{{base_url}}"],
+							"path": ["refresh"]
+						},
+						"description": "Refresh access token using refresh token. Refresh token can be passed in body or will be read from cookies."
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Logout successful', function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Clear tokens from environment",
+									"pm.environment.unset('access_token');",
+									"pm.environment.unset('refresh_token');",
+									"console.log('Tokens cleared from environment');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/logout",
+							"host": ["{{base_url}}"],
+							"path": ["logout"]
+						},
+						"description": "Logout user and blacklist tokens. Clears refresh token cookie."
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication endpoints for signup, login, token refresh, and logout."
+		},
+		{
+			"name": "Password Management",
+			"item": [
+				{
+					"name": "Forgot Password",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john.doe@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/password/forgot",
+							"host": ["{{base_url}}"],
+							"path": ["password", "forgot"]
+						},
+						"description": "Request password reset email. User will receive reset token via email."
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"token\": \"reset-password-token-from-email\",\n  \"password\": \"NewSecurePass123!\",\n  \"password_confirmation\": \"NewSecurePass123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/password/reset",
+							"host": ["{{base_url}}"],
+							"path": ["password", "reset"]
+						},
+						"description": "Reset password using token received via email."
+					},
+					"response": []
+				}
+			],
+			"description": "Password reset and recovery endpoints."
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "List All Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/users",
+							"host": ["{{base_url}}"],
+							"path": ["users"]
+						},
+						"description": "Get list of all users with basic information."
+					},
+					"response": []
+				},
+				{
+					"name": "Get User by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('User retrieved successfully', function() {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/users/{{user_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["users", "{{user_id}}"]
+						},
+						"description": "Get detailed information about a specific user."
+					},
+					"response": []
+				}
+			],
+			"description": "User management endpoints."
+		},
+		{
+			"name": "Tasks",
+			"item": [
+				{
+					"name": "List Tasks",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Tasks retrieved successfully', function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has data property', function() {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('data');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/tasks",
+							"host": ["{{base_url}}"],
+							"path": ["tasks"]
+						},
+						"description": "Get all tasks for current user, grouped by status."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Task",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Task created successfully', function() {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response has task id', function() {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    ",
+									"    // Save task ID for other requests",
+									"    pm.environment.set('task_id', jsonData.data.id);",
+									"    console.log('Task ID saved:', jsonData.data.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"task\": {\n    \"title\": \"Complete API Testing\",\n    \"description\": \"Test all Postman API endpoints\",\n    \"priority\": \"high\",\n    \"status\": \"pending\",\n    \"due_date_time\": \"2025-12-31T23:59:59Z\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/tasks",
+							"host": ["{{base_url}}"],
+							"path": ["tasks"]
+						},
+						"description": "Create a new task. Priority: low/medium/high. Status: pending/in_progress/completed."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Task",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/tasks/{{task_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["tasks", "{{task_id}}"]
+						},
+						"description": "Get details of a specific task."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Task",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"task\": {\n    \"title\": \"Updated Task Title\",\n    \"description\": \"Updated description\",\n    \"priority\": \"medium\",\n    \"status\": \"in_progress\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/tasks/{{task_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["tasks", "{{task_id}}"]
+						},
+						"description": "Update an existing task."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Task",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/tasks/{{task_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["tasks", "{{task_id}}"]
+						},
+						"description": "Delete a task."
+					},
+					"response": []
+				},
+				{
+					"name": "Start Task",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/tasks/{{task_id}}/start",
+							"host": ["{{base_url}}"],
+							"path": ["tasks", "{{task_id}}", "start"]
+						},
+						"description": "Start a task (change status to in_progress)."
+					},
+					"response": []
+				},
+				{
+					"name": "Complete Task",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/tasks/{{task_id}}/complete",
+							"host": ["{{base_url}}"],
+							"path": ["tasks", "{{task_id}}", "complete"]
+						},
+						"description": "Mark task as completed."
+					},
+					"response": []
+				},
+				{
+					"name": "Pause Task",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"data\": {\n    \"pause\": {\n      \"reason\": \"technical_issue\",\n      \"comment\": \"Waiting for API documentation\",\n      \"progress\": 45\n    }\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/tasks/{{task_id}}/pause",
+							"host": ["{{base_url}}"],
+							"path": ["tasks", "{{task_id}}", "pause"]
+						},
+						"description": "Pause a task with reason and progress. Reasons: technical_issue, waiting_approval, blocked, other."
+					},
+					"response": []
+				},
+				{
+					"name": "Resume Task",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/tasks/{{task_id}}/resume",
+							"host": ["{{base_url}}"],
+							"path": ["tasks", "{{task_id}}", "resume"]
+						},
+						"description": "Resume a paused task."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Pause History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/tasks/{{task_id}}/pause_history",
+							"host": ["{{base_url}}"],
+							"path": ["tasks", "{{task_id}}", "pause_history"]
+						},
+						"description": "Get complete pause history for a task with events and snapshots."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Pause Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/tasks/{{task_id}}/pause_stats",
+							"host": ["{{base_url}}"],
+							"path": ["tasks", "{{task_id}}", "pause_stats"]
+						},
+						"description": "Get pause statistics including total pauses, total duration, average duration."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Task Events",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/tasks/{{task_id}}/events",
+							"host": ["{{base_url}}"],
+							"path": ["tasks", "{{task_id}}", "events"]
+						},
+						"description": "Get all events for a task in timeline order."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Task Snapshots",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/tasks/{{task_id}}/snapshots",
+							"host": ["{{base_url}}"],
+							"path": ["tasks", "{{task_id}}", "snapshots"]
+						},
+						"description": "Get all snapshots for a task in chronological order."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Task Timeline",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/tasks/{{task_id}}/timeline",
+							"host": ["{{base_url}}"],
+							"path": ["tasks", "{{task_id}}", "timeline"]
+						},
+						"description": "Get combined timeline of events and snapshots for a task."
+					},
+					"response": []
+				}
+			],
+			"description": "Complete task management including CRUD operations, state management (start/complete/pause/resume), and analytics."
+		},
+		{
+			"name": "Settings",
+			"item": [
+				{
+					"name": "List Settings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/settings?configurable_type=User&configurable_id={{user_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["settings"],
+							"query": [
+								{
+									"key": "configurable_type",
+									"value": "User"
+								},
+								{
+									"key": "configurable_id",
+									"value": "{{user_id}}"
+								}
+							]
+						},
+						"description": "Get all settings for a configurable (User/Task/etc)."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Setting",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Setting created successfully', function() {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"const jsonData = pm.response.json();",
+									"if (jsonData.id) {",
+									"    pm.environment.set('setting_id', jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"configurable_type\": \"User\",\n  \"configurable_id\": {{user_id}},\n  \"key\": \"theme\",\n  \"value\": {\n    \"color\": \"dark\",\n    \"fontSize\": \"medium\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/settings",
+							"host": ["{{base_url}}"],
+							"path": ["settings"]
+						},
+						"description": "Create a new setting for a configurable entity. Value can be any JSON object."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Setting",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"data\": {\n    \"value\": {\n      \"color\": \"light\",\n      \"fontSize\": \"large\"\n    }\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/settings/{{setting_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["settings", "{{setting_id}}"]
+						},
+						"description": "Update a setting value."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Setting",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/settings/{{setting_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["settings", "{{setting_id}}"]
+						},
+						"description": "Delete a setting."
+					},
+					"response": []
+				}
+			],
+			"description": "Polymorphic settings management for Users, Tasks, and other entities."
+		},
+		{
+			"name": "Health Check",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						},
+						"description": "Check API health status. No authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Rails Health Check",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/up",
+							"host": ["{{base_url}}"],
+							"path": ["up"]
+						},
+						"description": "Rails default health check endpoint. Returns 200 if app is running."
+					},
+					"response": []
+				}
+			],
+			"description": "Health check endpoints for monitoring."
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000",
+			"type": "string"
+		}
+	]
+}

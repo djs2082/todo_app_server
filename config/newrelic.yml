@@ -1,0 +1,111 @@
+# New Relic APM Configuration
+# https://docs.newrelic.com/docs/apm/agents/ruby-agent/configuration/ruby-agent-configuration/
+
+common: &default_settings
+  # Your application name. Renaming here affects where data displays in New Relic.
+  app_name: <%= ENV['NEW_RELIC_APP_NAME'] || 'TodoApp' %>
+
+  # Your New Relic license key
+  license_key: <%= ENV['NEW_RELIC_LICENSE_KEY'] %>
+
+  # Agent logging level
+  log_level: info
+
+  # Distributed tracing
+  distributed_tracing:
+    enabled: true
+
+  # Span events
+  span_events:
+    enabled: true
+    max_samples_stored: 2000
+
+  # Transaction tracer
+  transaction_tracer:
+    enabled: true
+    transaction_threshold: apdex_f
+    record_sql: obfuscated
+    stack_trace_threshold: 0.5
+    explain_enabled: true
+    explain_threshold: 0.5
+
+  # Error collector
+  error_collector:
+    enabled: true
+    capture_events: true
+    max_event_samples_stored: 100
+    ignore_classes:
+      - ActionController::RoutingError
+      - ActiveRecord::RecordNotFound
+      - ActionController::InvalidAuthenticityToken
+
+  # Browser monitoring (RUM)
+  browser_monitoring:
+    auto_instrument: false # API-only app
+
+  # Thread profiler
+  thread_profiler:
+    enabled: true
+
+  # Slow SQL
+  slow_sql:
+    enabled: true
+    record_sql: obfuscated
+    explain_threshold: 0.5
+    explain_enabled: true
+    use_longer_sql_id: true
+
+  # Custom attributes
+  attributes:
+    enabled: true
+    include:
+      - request.parameters.*
+      - request.headers.userAgent
+      - request.headers.referer
+
+# Development environment
+development:
+  <<: *default_settings
+  monitor_mode: false
+  developer_mode: true
+
+# Test environment
+test:
+  <<: *default_settings
+  monitor_mode: false
+
+# Staging environment
+staging:
+  <<: *default_settings
+  monitor_mode: true
+  app_name: <%= ENV['NEW_RELIC_APP_NAME'] || 'TodoApp Staging' %>
+
+  # Sample rate for staging (lower than production)
+  transaction_tracer:
+    enabled: true
+    transaction_threshold: 2.0
+
+  distributed_tracing:
+    enabled: true
+
+# Production environment
+production:
+  <<: *default_settings
+  monitor_mode: true
+  app_name: <%= ENV['NEW_RELIC_APP_NAME'] || 'TodoApp Production' %>
+
+  # High precision in production
+  distributed_tracing:
+    enabled: true
+
+  # Optimize for production
+  transaction_tracer:
+    enabled: true
+    transaction_threshold: 1.0
+    record_sql: obfuscated
+    stack_trace_threshold: 0.5
+
+  # Custom instrumentation
+  custom_insights_events:
+    enabled: true
+    max_samples_stored: 3000

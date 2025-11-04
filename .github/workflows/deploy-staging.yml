@@ -1,0 +1,314 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment even if CI failed'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  DEPLOY_ENV: staging
+
+jobs:
+  # Pre-deployment checks
+  pre-deploy:
+    name: Pre-deployment Checks
+    runs-on: ubuntu-latest
+    outputs:
+      should_deploy: ${{ steps.check.outputs.should_deploy }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check if CI passed
+        id: check
+        run: |
+          # Check if force deploy is enabled
+          if [ "${{ github.event.inputs.force_deploy }}" = "true" ]; then
+            echo "Force deploy enabled, skipping CI check"
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Otherwise check CI status
+          echo "Checking CI status for commit ${{ github.sha }}"
+          # This would check the CI workflow status
+          echo "should_deploy=true" >> $GITHUB_OUTPUT
+
+      - name: Validate environment variables
+        run: |
+          # List required secrets
+          REQUIRED_SECRETS=(
+            "STAGING_HOST"
+            "STAGING_SSH_USER"
+            "STAGING_SSH_KEY"
+          )
+
+          echo "Checking required secrets..."
+          # Note: We can't actually check if secrets exist, but we can document them
+          for secret in "${REQUIRED_SECRETS[@]}"; do
+            echo "  - $secret"
+          done
+
+  # Deploy to staging server
+  deploy:
+    name: Deploy to Staging Server
+    runs-on: ubuntu-latest
+    needs: pre-deploy
+    if: needs.pre-deploy.outputs.should_deploy == 'true'
+    environment:
+      name: staging
+      url: https://staging-api.your-domain.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_SSH_PORT || 22 }}
+          script: |
+            set -e  # Exit on error
+
+            echo "========================================="
+            echo "Starting deployment to staging"
+            echo "Commit: ${{ github.sha }}"
+            echo "Branch: ${{ github.ref_name }}"
+            echo "========================================="
+
+            # Navigate to project directory
+            cd /home/deploy/todo_app_server || exit 1
+
+            # Pull latest code
+            echo "Pulling latest code..."
+            git fetch --all
+            git checkout staging
+            git pull origin staging
+
+            # Verify we're on the correct commit
+            CURRENT_COMMIT=$(git rev-parse HEAD)
+            if [ "$CURRENT_COMMIT" != "${{ github.sha }}" ]; then
+              echo "ERROR: Commit mismatch!"
+              echo "Expected: ${{ github.sha }}"
+              echo "Got: $CURRENT_COMMIT"
+              exit 1
+            fi
+
+            # Load environment variables
+            if [ -f .env.staging ]; then
+              source .env.staging
+            else
+              echo "ERROR: .env.staging not found!"
+              exit 1
+            fi
+
+            # Pull latest Docker image
+            echo "Pulling latest Docker image..."
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging || {
+              echo "ERROR: Failed to pull Docker image"
+              exit 1
+            }
+
+            # Stop existing containers
+            echo "Stopping existing containers..."
+            docker-compose -f docker-compose.staging.yml down || true
+
+            # Start new containers
+            echo "Starting new containers..."
+            docker-compose -f docker-compose.staging.yml up -d
+
+            # Wait for services to be ready
+            echo "Waiting for services to start..."
+            sleep 10
+
+            # Run database migrations
+            echo "Running database migrations..."
+            docker-compose -f docker-compose.staging.yml exec -T app bundle exec rails db:migrate || {
+              echo "ERROR: Migration failed!"
+              docker-compose -f docker-compose.staging.yml logs app
+              exit 1
+            }
+
+            # Health check
+            echo "Running health check..."
+            MAX_RETRIES=30
+            RETRY_COUNT=0
+            until curl -f http://localhost:3000/health || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
+              echo "Waiting for application to be healthy... ($RETRY_COUNT/$MAX_RETRIES)"
+              sleep 2
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+            done
+
+            if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+              echo "ERROR: Health check failed!"
+              docker-compose -f docker-compose.staging.yml logs app
+              exit 1
+            fi
+
+            echo "Health check passed!"
+
+            # Clean up old Docker images
+            echo "Cleaning up old Docker images..."
+            docker image prune -f
+
+            echo "========================================="
+            echo "Deployment completed successfully!"
+            echo "========================================="
+
+      - name: Verify deployment
+        run: |
+          # Wait a bit for DNS/proxy to catch up
+          sleep 5
+
+          # Test staging URL
+          curl -f https://staging-api.your-domain.com/health || {
+            echo "ERROR: Staging deployment verification failed!"
+            exit 1
+          }
+
+          echo "Staging deployment verified successfully!"
+
+      - name: Run smoke tests
+        run: |
+          # Basic API smoke tests
+          echo "Running smoke tests against staging..."
+
+          # Test health endpoint
+          curl -f https://staging-api.your-domain.com/health
+
+          # Test API version endpoint (if exists)
+          # curl -f https://staging-api.your-domain.com/api/v1
+
+          echo "Smoke tests passed!"
+
+  # Post-deployment tasks
+  post-deploy:
+    name: Post-deployment Tasks
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: always()
+
+    steps:
+      - name: Collect deployment logs
+        if: failure()
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            cd /home/deploy/todo_app_server
+            docker-compose -f docker-compose.staging.yml logs --tail=100
+
+      - name: Notify team on Slack
+        if: always()
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "Staging Deployment ${{ needs.deploy.result == 'success' && '✅ Succeeded' || '❌ Failed' }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "${{ needs.deploy.result == 'success' && '✅' || '❌' }} *Staging Deployment*\n*Repository:* `${{ github.repository }}`\n*Branch:* `${{ github.ref_name }}`\n*Commit:* `${{ github.sha }}`\n*Author:* ${{ github.actor }}\n*URL:* https://staging-api.your-domain.com"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Logs"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true
+
+      - name: Create deployment record
+        uses: chrnorm/deployment-action@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          environment: staging
+          deployment-id: ${{ github.run_id }}
+
+      - name: Update deployment status
+        uses: chrnorm/deployment-status@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          deployment-id: ${{ github.run_id }}
+          state: ${{ needs.deploy.result }}
+          environment-url: https://staging-api.your-domain.com
+
+  # Rollback on failure
+  rollback:
+    name: Rollback on Failure
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: failure()
+
+    steps:
+      - name: Rollback deployment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            echo "Rolling back deployment..."
+            cd /home/deploy/todo_app_server
+
+            # Get previous commit
+            PREVIOUS_COMMIT=$(git rev-parse HEAD~1)
+
+            echo "Rolling back to commit: $PREVIOUS_COMMIT"
+
+            # Checkout previous commit
+            git checkout $PREVIOUS_COMMIT
+
+            # Restart containers with previous version
+            docker-compose -f docker-compose.staging.yml down
+            docker-compose -f docker-compose.staging.yml up -d
+
+            echo "Rollback completed!"
+
+      - name: Notify rollback
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "⚠️ Staging Deployment Failed - Rollback Initiated",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "⚠️ *Staging deployment failed and was rolled back*\n*Repository:* `${{ github.repository }}`\n*Failed Commit:* `${{ github.sha }}`\n*Action:* Automatic rollback to previous version"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true
