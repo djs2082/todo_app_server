@@ -18,16 +18,7 @@ class TaskIndexRepresenter
     end
 
     def render_item(task)
-      {
-        id: task.id,
-        title: task.title,
-        description: task.description,
-        priority: task.priority,
-        status: task.status,
-        due_date_time: task.due_date_time,
-        pause_count: task.pause_count,
-        total_working_time: task.total_working_time
-      }.compact
+        task.as_json(only: [:id, :title, :description, :priority, :status, :due_date_time, :pause_count, :total_working_time])
     end
   end
 end

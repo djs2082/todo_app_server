@@ -1,38 +1,38 @@
 version: '3.8'
 
 services:
-  # app:
-  #   stdin_open: true
-  #   tty: true
-  #   build: .
-  #   ports:
-  #     - "3000:3000"
-  #   environment:
-  #     - DATABASE_HOST=${DATABASE_HOST}
-  #     - DATABASE_USERNAME=${DATABASE_USERNAME}
-  #     - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-  #     - REDIS_URL=${REDIS_URL}
-  #     - RAILS_ENV=${RAILS_ENV}
-  #     - SECRET_KEY_BASE=${SECRET_KEY_BASE}
-  #     - RAILS_SERVE_STATIC_FILES=${RAILS_SERVE_STATIC_FILES}
-  #     - RAILS_LOG_TO_STDOUT=${RAILS_LOG_TO_STDOUT}
-  #     - ALLOWED_HOSTS=${ALLOWED_HOSTS}
-  #     - EMAIL_BANNER_URL=${EMAIL_BANNER_URL}
-  #     - EMAIL_FROM=${EMAIL_FROM}
-  #     - SMTP_ADDRESS=${SMTP_ADDRESS}
-  #     - SMTP_USERNAME=${SMTP_USERNAME}
-  #     - SMTP_PASSWORD=${SMTP_PASSWORD}
-  #     - MAILER_DELIVERY_METHOD=${MAILER_DELIVERY_METHOD}
-  #     - APP_BASE_URL=${APP_BASE_URL}
-  #     - ACTIVATION_FAILURE_URL=${ACTIVATION_FAILURE_URL}
-  #   depends_on:
-  #     - db
-  #     - redis
-  #   volumes:
-  #     - .:/app
-  #   command: >
-  #     sh -c "bundle exec rails db:create db:migrate && bundle exec rails s -b 0.0.0.0 -p 3000"
-  #   restart: unless-stopped
+  app:
+    stdin_open: true
+    tty: true
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - REDIS_URL=${REDIS_URL}
+      - RAILS_ENV=${RAILS_ENV}
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+      - RAILS_SERVE_STATIC_FILES=${RAILS_SERVE_STATIC_FILES}
+      - RAILS_LOG_TO_STDOUT=${RAILS_LOG_TO_STDOUT}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - EMAIL_BANNER_URL=${EMAIL_BANNER_URL}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - SMTP_ADDRESS=${SMTP_ADDRESS}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - MAILER_DELIVERY_METHOD=${MAILER_DELIVERY_METHOD}
+      - APP_BASE_URL=${APP_BASE_URL}
+      - ACTIVATION_FAILURE_URL=${ACTIVATION_FAILURE_URL}
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - .:/app
+    command: >
+      sh -c "bundle exec rails db:create db:migrate && bundle exec rails s -b 0.0.0.0 -p 3000"
+    restart: unless-stopped
 
   resque:
     build: .
@@ -102,8 +102,6 @@ services:
     volumes:
       - redis_data:/data
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     depends_on:
       - db
 
