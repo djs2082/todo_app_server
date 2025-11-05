@@ -1,27 +1,37 @@
 class TasksController < ApplicationController
     before_action :authenticate_request
     before_action :set_task, except: [:index, :create]
+    after_action :verify_authorized, except: [:index]
+    after_action :verify_policy_scoped, only: [:index]
 
   def index
-    tasks = current_user.tasks.includes(:task_pauses)
-    grouped = TaskIndexRepresenter.render_collection(tasks)
+    tasks = policy_scope(Task).includes(:task_pauses, :account)
+    grouped = TaskRepresenter.render_collection(tasks)
     render_success(data: grouped)
   end
 
+
   def show
-    render_success(data: @task.as_json(only: [:id, :title, :description, :priority, :status, :due_date_time, :user_id]))
+    authorize @task
+    render_success(data: TaskRepresenter.render_show(@task))
   end
 
   def create
     task = current_user.tasks.build(task_params)
+    task.account = current_account
+
+    authorize task
+
     if task.save
-      render_created(message: "Task created", data: { id: task.id })
+      render_created(message: "Task created", data: { id: task.id, account_id: task.account_id })
     else
       render_failure(message: "Task creation failed", errors: task.errors.full_messages)
     end
   end
 
   def update
+    authorize @task
+
     if @task.update(task_params)
       render_success(message: "Task updated", data: { id: @task.id })
     else
@@ -30,11 +40,15 @@ class TasksController < ApplicationController
   end
 
   def destroy
+    authorize @task
+
     @task.destroy
     render_success(message: "Task deleted")
   end
 
    def start
+    authorize @task, :start?
+
     if @task.start!
       render_success(message: 'Task started successfully', data: { task: @task })
     else
@@ -43,6 +57,8 @@ class TasksController < ApplicationController
   end
 
   def complete
+    authorize @task, :complete?
+
     if @task.complete!
       render_success(message: 'Task completed successfully', data: { task: @task })
     else
@@ -51,6 +67,7 @@ class TasksController < ApplicationController
   end
 
   def pause
+    authorize @task, :pause?
 
     pause_service = TaskPauseService.new(@task)
     pause = pause_service.pause(
@@ -58,7 +75,7 @@ class TasksController < ApplicationController
       comment: pause_params[:comment],
       progress: pause_params[:progress]
     )
-    
+
     if pause.persisted?
       render_success(message: 'Task paused successfully', data: {
         pause: pause,
@@ -73,8 +90,10 @@ class TasksController < ApplicationController
   end
 
    def resume
+    authorize @task, :resume?
+
     pause_service = TaskPauseService.new(@task)
-    
+
     if pause_service.resume
       render json: {
         task: @task.reload,
@@ -121,7 +140,9 @@ class TasksController < ApplicationController
   private
 
   def set_task
-    @task = current_user.tasks.find(params[:id])
+    @task = policy_scope(Task).find(params[:id])
+  rescue ActiveRecord::RecordNotFound
+    render_failure(message: "Task not found", status: :not_found)
   end
 
   def task_params

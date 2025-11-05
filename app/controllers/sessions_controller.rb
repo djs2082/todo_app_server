@@ -5,20 +5,12 @@ class SessionsController < ApplicationController
     return render_unauthorized(message: I18n.t("errors.user_not_activated")) unless user&.activated?
     
     if user&.authenticate(login_params[:password])
-      # Record full sign-in effects (count, timestamp, events)
+
       user.record_successful_sign_in!
       tokens = Authenticator.generate_token_pair(user)
       
       Authenticator.set_refresh_token_cookie(response, cookies, tokens[:refresh_token])
       
-      user_payload = {
-        id: user.id,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        email: user.email,
-        accountName: user.account_name,
-      }
-
       render_success(
         message: I18n.t("success.login_success"), 
         data: { user: UserRepresenter.render(user) ,
@@ -29,8 +21,9 @@ class SessionsController < ApplicationController
     end
   end
 
+
   def refresh
-    refresh_token = params[:refresh_token] || Authenticator.get_refresh_token_from_cookies(cookies)
+    refresh_token = Authenticator.get_refresh_token_from_cookies(cookies)
     
     unless refresh_token
       return render_unauthorized(message: I18n.t("errors.refresh_token_missing"))

@@ -42,6 +42,18 @@ en:
     password_reset_failed: "Password reset failed"
     refresh_token_missing: "Refresh token is missing"
     invalid_refresh_token: "Invalid or expired refresh token"
+    account_not_found: "Account not found"
+    role_not_found: "Role not found"
+    user_already_member: "User is already a member of this account"
+    invitation_already_exists: "An active invitation already exists for this email"
+    invitation_send_failed: "Failed to send invitation email"
+    pending_invitation_resend_error: "Can only resend pending invitations"
+    invitation_resent: "Invitation resent successfully"
+    invitation_not_found: "Invitation not found"
+    unauthorized:
+      account_policy:
+        show?: "You are not authorized to view this account"
+        update?: "You are not authorized to update this account"
   success:
     login_success: "Login successful"
     logout_success: "Logout successful"
@@ -50,3 +62,9 @@ en:
     account_activated: "Account activated successfully"
     forgot_password_email_sent: "If the email exists, a reset link has been sent"
     password_reset_success: "Password has been reset successfully"
+    accounts_listed: "Accounts retrieved successfully"
+    account_retrieved: "Account retrieved successfully"
+    invitation_sent: "Invitation sent successfully"
+    invitation_retrieved: "Invitation retrieved successfully"
+    invitation_canceled: "Invitation canceled successfully"
+    fail_to_cancel_invitation: "Failed to cancel invitation"

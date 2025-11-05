@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta content='text/html; charset=UTF-8' http-equiv='Content-Type' />
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background-color: #FF9800; color: white; padding: 20px; text-align: center; }
+    .content { padding: 30px; background-color: #f9f9f9; }
+    .button { display: inline-block; padding: 12px 30px; background-color: #FF9800; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+    .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
+    .info-box { background-color: #fff3e0; border-left: 4px solid #FF9800; padding: 15px; margin: 20px 0; }
+    .important { background-color: #ffebee; border-left: 4px solid #f44336; padding: 15px; margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Administrator Invitation</h1>
+    </div>
+
+    <div class="content">
+      <p>Hello,</p>
+
+      <p>
+        You have been invited to be an <strong>Administrator</strong> for <strong><%= @account.name %></strong> on KaryaApp.
+      </p>
+
+      <div class="important">
+        <strong>⚠️ Important:</strong> As an administrator, you will have full access to manage this account,
+        including the ability to invite other administrators, managers, and users.
+      </div>
+
+      <div class="info-box">
+        <strong>Account:</strong> <%= @account.name %><br/>
+        <strong>Your Role:</strong> Administrator<br/>
+        <strong>Invitation expires:</strong> <%= @expires_at.strftime("%B %d, %Y at %I:%M %p") %>
+      </div>
+
+      <p><strong>As an Administrator, you can:</strong></p>
+      <ul>
+        <li>Invite and manage managers and users</li>
+        <li>Manage account settings</li>
+        <li>View and manage all tasks</li>
+        <li>Full administrative access to the account</li>
+      </ul>
+
+      <p>Click the button below to accept the invitation and create your administrator account:</p>
+
+      <div style="text-align: center;">
+        <a href="<%= @signup_url %>" class="button">Accept Admin Invitation</a>
+      </div>
+
+      <p style="font-size: 14px; color: #666;">
+        Or copy and paste this link into your browser:<br/>
+        <%= @signup_url %>
+      </p>
+
+      <p style="margin-top: 30px;">
+        This invitation will expire in <%= UserInvitation::TOKEN_EXPIRY_DAYS %> days.
+        If you didn't expect this invitation or have questions, please contact the person who sent this invitation.
+      </p>
+    </div>
+
+    <div class="footer">
+      <p>This is an automated message from KaryaApp. Please do not reply to this email.</p>
+    </div>
+  </div>
+</body>
+</html>

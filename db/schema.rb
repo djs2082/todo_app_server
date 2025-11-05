@@ -10,7 +10,30 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 202510265) do
+ActiveRecord::Schema[7.1].define(version: 2025_11_05_122620) do
+  create_table "account_users", charset: "utf8mb3", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "account_id", null: false
+    t.bigint "role_id", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_account_users_on_account_id"
+    t.index ["role_id"], name: "index_account_users_on_role_id"
+    t.index ["user_id", "account_id"], name: "index_account_users_on_user_id_and_account_id", unique: true
+    t.index ["user_id"], name: "index_account_users_on_user_id"
+  end
+
+  create_table "accounts", charset: "utf8mb3", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_accounts_on_name", unique: true
+    t.index ["slug"], name: "index_accounts_on_slug", unique: true
+  end
+
   create_table "email_templates", charset: "utf8mb3", force: :cascade do |t|
     t.string "name", null: false
     t.string "subject", null: false
@@ -44,6 +67,14 @@ ActiveRecord::Schema[7.1].define(version: 202510265) do
     t.datetime "updated_at", null: false
     t.index ["expires_at"], name: "index_jwt_blacklists_on_expires_at"
     t.index ["jti"], name: "index_jwt_blacklists_on_jti", unique: true
+  end
+
+  create_table "roles", charset: "utf8mb3", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_roles_on_name", unique: true
   end
 
   create_table "settings", charset: "utf8mb3", force: :cascade do |t|
@@ -114,9 +145,30 @@ ActiveRecord::Schema[7.1].define(version: 202510265) do
     t.integer "total_working_time", default: 0, null: false
     t.datetime "started_at"
     t.datetime "last_resumed_at"
+    t.bigint "account_id", null: false
+    t.index ["account_id"], name: "index_tasks_on_account_id"
     t.index ["due_date_time"], name: "index_tasks_on_due_date_time"
     t.index ["status"], name: "index_tasks_on_status"
     t.index ["user_id"], name: "index_tasks_on_user_id"
+  end
+
+  create_table "user_invitations", charset: "utf8mb3", force: :cascade do |t|
+    t.string "email", null: false
+    t.string "token", null: false
+    t.bigint "account_id", null: false
+    t.bigint "role_id", null: false
+    t.bigint "invited_by_id"
+    t.datetime "expires_at", null: false
+    t.datetime "accepted_at"
+    t.string "status", default: "pending", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_user_invitations_on_account_id"
+    t.index ["email", "account_id", "status"], name: "index_user_invitations_on_email_and_account_id_and_status"
+    t.index ["email"], name: "index_user_invitations_on_email"
+    t.index ["invited_by_id"], name: "index_user_invitations_on_invited_by_id"
+    t.index ["role_id"], name: "index_user_invitations_on_role_id"
+    t.index ["token"], name: "index_user_invitations_on_token", unique: true
   end
 
   create_table "users", charset: "utf8mb3", force: :cascade do |t|
@@ -124,7 +176,6 @@ ActiveRecord::Schema[7.1].define(version: 202510265) do
     t.string "last_name", null: false
     t.string "mobile"
     t.string "email", null: false
-    t.string "account_name", null: false
     t.string "password_digest", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -135,7 +186,6 @@ ActiveRecord::Schema[7.1].define(version: 202510265) do
     t.datetime "reset_password_expires_at"
     t.datetime "last_singin_at"
     t.integer "signin_count", default: 0, null: false
-    t.index ["account_name"], name: "index_users_on_account_name"
     t.index ["activation_token"], name: "index_users_on_activation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["last_singin_at"], name: "index_users_on_last_singin_at"
@@ -143,8 +193,15 @@ ActiveRecord::Schema[7.1].define(version: 202510265) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "account_users", "accounts"
+  add_foreign_key "account_users", "roles"
+  add_foreign_key "account_users", "users"
   add_foreign_key "task_events", "tasks"
   add_foreign_key "task_pauses", "tasks"
   add_foreign_key "task_snapshots", "tasks"
+  add_foreign_key "tasks", "accounts"
   add_foreign_key "tasks", "users"
+  add_foreign_key "user_invitations", "accounts"
+  add_foreign_key "user_invitations", "roles"
+  add_foreign_key "user_invitations", "users", column: "invited_by_id"
 end

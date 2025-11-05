@@ -1,5 +1,6 @@
 class Task < ApplicationRecord
   belongs_to :user
+  belongs_to :account
   has_many :task_pauses, dependent: :destroy
   has_many :task_events, dependent: :destroy
   has_many :task_snapshots, dependent: :destroy

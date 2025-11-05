@@ -41,6 +41,7 @@ gem "sprockets-rails"
 gem "sentry-ruby"
 gem "sentry-rails"
 gem "sentry-resque"
+gem "pundit", "~> 2.3"
 
 
 

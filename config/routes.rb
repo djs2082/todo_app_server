@@ -43,6 +43,18 @@ Rails.application.routes.draw do
   resources :settings, only: [:index, :create, :update, :destroy]
   get '/health', to: 'health#check'
 
+  # Account and invitation management routes
+  resources :accounts, only: [:index, :show] do
+    resources :invitations, controller: 'user_invitations', only: [:index, :create]
+  end
+
+  # Invitation management (not nested)
+  resources :invitations, controller: 'user_invitations', only: [:show, :destroy] do
+    member do
+      post :resend
+    end
+  end
+
 end
 
 

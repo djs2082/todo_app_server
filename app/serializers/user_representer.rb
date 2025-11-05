@@ -7,7 +7,6 @@ class UserRepresenter
         firstName: user.first_name,
         lastName: user.last_name,
         email: user.email,
-        accountName: user.account_name,
         mobile: user.mobile,
         settings: (user.respond_to?(:settings) ? SettingRepresenter.render_collection(user.settings) : [])
       }.compact

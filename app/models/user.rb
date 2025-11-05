@@ -17,7 +17,13 @@ class User < ApplicationRecord
   has_many :tasks, dependent: :destroy
   has_many :settings, as: :configurable, dependent: :destroy
 
-  validates :first_name, :last_name, :email, :account_name, presence: true
+  # Multi-tenant associations
+  has_many :account_users, dependent: :destroy
+  has_many :accounts, through: :account_users
+  has_many :roles, through: :account_users
+  has_many :sent_invitations, class_name: 'UserInvitation', foreign_key: 'invited_by_id', dependent: :nullify
+
+  validates :first_name, :last_name, :email, presence: true
   validates :email, uniqueness: true, format: { with: EMAIL_REGEX, message: 'is invalid' }
 
   before_validation :normalize_mobile
@@ -73,6 +79,43 @@ class User < ApplicationRecord
   # Called only on the first ever sign in (kept for backward-compatibility)
   def user_first_sign_in
     publish(:user_first_sign_in, self)
+  end
+
+  # Multi-tenant methods
+  def role_in_account(account)
+    account_users.find_by(account: account)&.role
+  end
+
+  def administrator_in?(account)
+    role_in_account(account)&.administrator? || false
+  end
+
+  def manager_in?(account)
+    role_in_account(account)&.manager? || false
+  end
+
+  def user_in?(account)
+    role_in_account(account)&.user? || false
+  end
+
+  def belongs_to_account?(account)
+    accounts.include?(account)
+  end
+
+  def primary_account
+    # Return the first active account the user belongs to
+    # Or KaryaApp account as fallback
+    accounts.active.first || Account.karyaapp_account
+  end
+
+  def can_invite_users_in?(account)
+    role = role_in_account(account)
+    role&.can_invite_users? || false
+  end
+
+  def can_invite_managers_in?(account)
+    role = role_in_account(account)
+    role&.can_invite_managers? || false
   end
 
   private
