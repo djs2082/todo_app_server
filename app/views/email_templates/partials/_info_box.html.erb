@@ -1,0 +1,7 @@
+<div class="info-box">
+  <% locals[:items].each do |item| %>
+    <div class="info-item">
+      <strong><%= item[:label] %>:</strong> <%= item[:value] %>
+    </div>
+  <% end %>
+</div>

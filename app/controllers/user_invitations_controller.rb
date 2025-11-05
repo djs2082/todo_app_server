@@ -79,10 +79,28 @@ class UserInvitationsController < ApplicationController
       @invitation.extend_expiry!
     end
 
-    # Resend invitation email
-    UserInvitationMailer.invite_user(@invitation).deliver_later rescue nil
+    # Resend invitation email using EmailService
+    template_name = @invitation.role.administrator? ? 'invite_admin' : 'invite_user'
+
+    EmailService.send_email(
+      to: @invitation.email,
+      template_name: template_name,
+      context: {
+        account_name: @invitation.account.name,
+        role_name: @invitation.role.name.titleize,
+        inviter_name: @invitation.inviter ? "#{@invitation.inviter.first_name} #{@invitation.inviter.last_name}" : "An administrator",
+        signup_url: "#{ENV.fetch('FRONTEND_URL', 'http://localhost:3000')}/signup?invitation_token=#{@invitation.token}",
+        expires_at: @invitation.expires_at,
+        expiry_days: UserInvitation::TOKEN_EXPIRY_DAYS
+      },
+      subject: EmailTemplate.find_by(name: template_name)&.subject&.gsub('{{account_name}}', @invitation.account.name),
+      async: false  # Send immediately for resend
+    )
 
     render_success(message: I18n.t("success.invitation_resent", default: "Invitation resent successfully"))
+  rescue => e
+    Rails.logger.error("Failed to resend invitation: #{e.message}")
+    render_failure(message: I18n.t("errors.invitation_resend_failed", default: "Failed to resend invitation"))
   end
 
   private
@@ -99,5 +117,9 @@ class UserInvitationsController < ApplicationController
     unless @invitation
       render_failure(message: I18n.t("errors.invitation_not_found", default: "Invitation not found"), status: :not_found)
     end
+  end
+
+  def invitation_params
+    params.permit(:email, :role_id)
   end
 end

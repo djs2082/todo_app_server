@@ -100,13 +100,24 @@ namespace :invitations do
           invited_by: inviter
         )
 
-        # Send email
+        # Send email using EmailService
         begin
-          if role.administrator?
-            UserInvitationMailer.invite_admin(invitation).deliver_later
-          else
-            UserInvitationMailer.invite_user(invitation).deliver_later
-          end
+          template_name = role.administrator? ? 'invite_admin' : 'invite_user'
+
+          EmailService.send_email(
+            to: email,
+            template_name: template_name,
+            context: {
+              account_name: account.name,
+              role_name: role.name.titleize,
+              inviter_name: inviter ? "#{inviter.first_name} #{inviter.last_name}" : "An administrator",
+              signup_url: "#{ENV.fetch('FRONTEND_URL', 'http://localhost:3000')}/signup?invitation_token=#{invitation.token}",
+              expires_at: invitation.expires_at,
+              expiry_days: UserInvitation::TOKEN_EXPIRY_DAYS
+            },
+            subject: EmailTemplate.find_by(name: template_name)&.subject&.gsub('{{account_name}}', account.name),
+            async: true
+          )
           puts "✓ Invited: #{email}"
           success_count += 1
         rescue => e

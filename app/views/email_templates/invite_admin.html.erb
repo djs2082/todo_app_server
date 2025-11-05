@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Administrator Invitation</title>
+    <style><%= stylesheet_link_tag 'email', media: 'all', host: Rails.application.config.action_mailer.asset_host %></style>
+  </head>
+  <body>
+    <div class="email-wrapper">
+      <!-- Hero Section -->
+      <div class="hero-section">
+        <%= render 'email_templates/partials/hero', locals: { image_url: 'https://karya-app.s3.us-east-1.amazonaws.com/ChatGPT+Image+Sep+30%2C+2025%2C+11_40_57+PM.png' } %>
+      </div>
+
+      <div class="content">
+        <%= render 'email_templates/partials/greeing', locals: { message: "Hello! 👋" } %>
+
+        <p class="welcome-message">
+          You have been invited to be an <strong>Administrator</strong> for
+          <strong><%= @variables[:account_name] %></strong> on KaryaApp.
+        </p>
+
+        <%= render 'email_templates/partials/warning_box', locals: {
+          title: '⚠️ Important:',
+          message: 'As an administrator, you will have full access to manage this account, including the ability to invite other administrators, managers, and users.'
+        } %>
+
+        <%= render 'email_templates/partials/info_box', locals: {
+          items: [
+            { label: 'Account', value: @variables[:account_name] },
+            { label: 'Your Role', value: 'Administrator' },
+            { label: 'Invitation expires', value: @variables[:expires_at].strftime("%B %d, %Y at %I:%M %p") }
+          ]
+        } %>
+
+        <%= render 'email_templates/partials/permissions_list', locals: {
+          title: 'As an Administrator, you can:',
+          permissions: [
+            '✅ Invite and manage other administrators, managers, and users',
+            '✅ Manage account settings and configuration',
+            '✅ View and manage all tasks within the account',
+            '✅ Full administrative access to all account features'
+          ]
+        } %>
+
+        <%= render 'email_templates/partials/hightlight', locals: {
+          message: "Click the button below to accept the invitation and create your administrator account"
+        } %>
+
+        <!-- CTA Button -->
+        <div class="cta-section">
+          <%= render 'email_templates/partials/button', locals: {
+            href: @variables[:signup_url],
+            text: 'Accept Admin Invitation'
+          } %>
+        </div>
+
+        <%= render 'email_templates/partials/link_block', locals: {
+          description: "Or copy and paste this link into your browser:",
+          url: @variables[:signup_url]
+        } %>
+
+        <%= render 'email_templates/partials/note_box', locals: {
+          message: "⏱️ This invitation will expire in #{@variables[:expiry_days]} days. If you didn't expect this invitation or have questions, please contact the person who sent this invitation."
+        } %>
+
+        <!-- Divider -->
+        <%= render 'email_templates/partials/divider' %>
+
+        <%= render 'email_templates/partials/need_help' %>
+      </div>
+    </div>
+  </body>
+</html>

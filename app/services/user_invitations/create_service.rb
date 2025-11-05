@@ -1,5 +1,7 @@
 module UserInvitations
     class CreateService
+        Result = Struct.new(:success?, :message, :invitation, :errors, :status, keyword_init: true)
+
         def initialize(account:, current_user:, params:)
             @account = account
             @current_user = current_user
@@ -7,7 +9,6 @@ module UserInvitations
         end
 
         def call
-            Result = Struct.new(:success?, :message, :invitation, :errors, :status, keyword_init: true)
             role = Role.find_by(id: @params[:role_id])
             return Result.new(false, I18n.t("errors.role_not_found"), nil, nil, :not_found) unless role
 
@@ -32,16 +33,38 @@ module UserInvitations
 
             if invitation.save
                 send_invitation_email(invitation)
-                Result.new(true, I18n.t("success.invitation_sent"), invitation, nil, :ok)
+                Result.new(success?: true, message: I18n.t("success.invitation_sent", default: "Invitation sent successfully"), invitation: invitation, errors: nil, status: :ok)
             else
-                Result.new(false, I18n.t("errors.invitation_send_failed"), nil, invitation.errors.full_messages, :unprocessable_entity)
+                Result.new(success?: false, message: I18n.t("errors.invitation_send_failed", default: "Failed to send invitation"), invitation: nil, errors: invitation.errors.full_messages, status: :unprocessable_entity)
             end
         end
 
         private
-    
+
         def authorize_invitation(invitation)
             Pundit.authorize(@current_user, invitation, :create?)
+        end
+
+        def send_invitation_email(invitation)
+            template_name = invitation.role.administrator? ? 'invite_admin' : 'invite_user'
+
+            EmailService.send_email(
+                to: invitation.email,
+                template_name: template_name,
+                context: {
+                    account_name: invitation.account.name,
+                    role_name: invitation.role.name.titleize,
+                    inviter_name: invitation.inviter ? "#{invitation.inviter.first_name} #{invitation.inviter.last_name}" : "An administrator",
+                    signup_url: "#{ENV.fetch('FRONTEND_URL', 'http://localhost:3000')}/signup?invitation_token=#{invitation.token}",
+                    expires_at: invitation.expires_at,
+                    expiry_days: UserInvitation::TOKEN_EXPIRY_DAYS
+                },
+                subject: EmailTemplate.find_by(name: template_name)&.subject&.gsub('{{account_name}}', invitation.account.name),
+                async: true
+            )
+        rescue => e
+            Rails.logger.error("Failed to send invitation email: #{e.message}")
+            # Don't fail the invitation creation if email fails
         end
 
     end

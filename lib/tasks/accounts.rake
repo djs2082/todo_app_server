@@ -38,9 +38,22 @@ namespace :accounts do
         )
         puts "✓ Created invitation for admin: #{admin_email}"
 
-        # Send invitation email
+        # Send invitation email using EmailService
         begin
-          UserInvitationMailer.invite_admin(invitation).deliver_now
+          EmailService.send_email(
+            to: admin_email,
+            template_name: 'invite_admin',
+            context: {
+              account_name: account.name,
+              role_name: 'Administrator',
+              inviter_name: 'System',
+              signup_url: "#{ENV.fetch('FRONTEND_URL', 'http://localhost:3000')}/signup?invitation_token=#{invitation.token}",
+              expires_at: invitation.expires_at,
+              expiry_days: UserInvitation::TOKEN_EXPIRY_DAYS
+            },
+            subject: EmailTemplate.find_by(name: 'invite_admin')&.subject&.gsub('{{account_name}}', account.name),
+            async: false
+          )
           puts "✓ Sent invitation email to: #{admin_email}"
         rescue => e
           puts "⚠ Warning: Failed to send email (#{e.message})"

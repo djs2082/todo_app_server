@@ -1,0 +1,8 @@
+<div class="permissions-list">
+  <strong><%= locals[:title] %></strong>
+  <ul>
+    <% locals[:permissions].each do |permission| %>
+      <li><%= permission %></li>
+    <% end %>
+  </ul>
+</div>
