@@ -82,15 +82,14 @@ class Authenticator
     end
 
     def set_refresh_token_cookie(response, cookies, refresh_token)
-      cookie_domain = Rails.env.production? ? "#{ENV.fetch('WEB_DOMAIN', 'karya-app.com')}" : nil
-
+      cookie_domain = Rails.env.production? ? ".#{ENV.fetch('WEB_DOMAIN', 'karya-app.com')}" : 'localhost'
       response.set_cookie(:refresh_token, {
         value: refresh_token,
         httponly: true,
         expires: refresh_token_ttl.from_now,
         secure: true,
         same_site: :none,
-        domain: '.karya-app.com'
+        domain: cookie_domain
       })
     end
 
