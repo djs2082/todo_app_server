@@ -82,12 +82,15 @@ class Authenticator
     end
 
     def set_refresh_token_cookie(response, cookies, refresh_token)
+      cookie_domain = Rails.env.production? ? ".#{ENV['WEB_DOMAIN']}" : nil
+
       response.set_cookie(:refresh_token, {
         value: refresh_token,
         httponly: true,
         expires: refresh_token_ttl.from_now,
         secure: true,
-        same_site: :none
+        same_site: :none,
+        domain: cookie_domain
       })
     end
 
