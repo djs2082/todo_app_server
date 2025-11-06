@@ -90,7 +90,7 @@ class Authenticator
         expires: refresh_token_ttl.from_now,
         secure: true,
         same_site: :none,
-        domain: cookie_domain
+        domain: '.karya-app.com'
       })
     end
 
