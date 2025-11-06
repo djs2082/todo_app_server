@@ -81,8 +81,12 @@ class Authenticator
       JwtBlacklist.active.exists?(jti: jti)
     end
 
+    def cookie_domain
+      Rails.env.production? ? ".#{ENV.fetch('WEB_DOMAIN', 'karya-app.com')}" : 'localhost'
+    end
+
+
     def set_refresh_token_cookie(response, cookies, refresh_token)
-      cookie_domain = Rails.env.production? ? ".#{ENV.fetch('WEB_DOMAIN', 'karya-app.com')}" : 'localhost'
       response.set_cookie(:refresh_token, {
         value: refresh_token,
         httponly: true,
@@ -94,7 +98,12 @@ class Authenticator
     end
 
     def clear_refresh_token_cookie(response, cookies)
-      response.delete_cookie(:refresh_token)
+      response.delete_cookie(:refresh_token, {
+        path: '/',
+        secure: true,
+        same_site: :none,
+        domain: cookie_domain
+      })
     end
 
     def get_refresh_token_from_cookies(cookies)
