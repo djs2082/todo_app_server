@@ -85,8 +85,10 @@ class Authenticator
       response.set_cookie(:refresh_token, {
         value: refresh_token,
         httponly: true,
-        expires: refresh_token_ttl.from_now
-      }.merge(cookie_options))
+        expires: refresh_token_ttl.from_now,
+        secure: true,
+        same_site: :none
+      })
     end
 
     def clear_refresh_token_cookie(response, cookies)
