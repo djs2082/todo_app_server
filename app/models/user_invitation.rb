@@ -1,4 +1,6 @@
 class UserInvitation < ApplicationRecord
+  include Events::Publisher
+
   # Constants
   TOKEN_EXPIRY_DAYS = 7
 
@@ -23,6 +25,8 @@ class UserInvitation < ApplicationRecord
   scope :expired, -> { where(status: 'expired') }
   scope :cancelled, -> { where(status: 'cancelled') }
   scope :active, -> { pending.where('expires_at > ?', Time.current) }
+
+  after_create :publish_invitation_created_event
 
   # Class methods
   def self.find_valid_invitation(token)
@@ -62,8 +66,12 @@ class UserInvitation < ApplicationRecord
     status == 'accepted'
   end
 
-  def extend_expiry!
+  def extend_expiry!()
     update(expires_at: TOKEN_EXPIRY_DAYS.days.from_now)
+  end
+
+  def publish_resend_event
+    publish(:user_invitation_resend, self)
   end
 
   private
@@ -74,5 +82,9 @@ class UserInvitation < ApplicationRecord
 
   def set_expiry
     self.expires_at ||= TOKEN_EXPIRY_DAYS.days.from_now
+  end
+
+  def publish_invitation_created_event
+    publish(:user_invitation_created, self)
   end
 end

@@ -12,6 +12,8 @@ class User < ApplicationRecord
     subscribe :user_forgot_password, :send_forgot_password_email
     subscribe :user_password_updated, :send_password_updated_email
     subscribe :user_first_sign_in, :update_relevant_settings
+    subscribe :user_invitation_created, :send_invitation_email
+    subscribe :user_invitation_resend, :send_invitation_email
 
     def self.send_activation_email(event, user)
          return unless user
@@ -47,6 +49,26 @@ class User < ApplicationRecord
             context: {
                 first_name: user.first_name
             },
+            async: true
+        )
+    end
+
+    def self.send_invitation_email(event, invitation)
+        return unless invitation
+        template_name = invitation.role.administrator? ? 'invite_admin' : 'invite_user'
+
+        EmailService.send_email(
+            to: invitation.email,
+            template_name: template_name,
+            context: {
+                account_name: invitation.account.name,
+                role_name: invitation.role.name.titleize,
+                inviter_name: invitation.inviter ? "#{invitation.inviter.first_name} #{invitation.inviter.last_name}" : "An administrator",
+                signup_url: "#{ENV.fetch('FRONTEND_URL', 'http://localhost:3000')}/signup?invitation_token=#{invitation.token}",
+                expires_at: invitation.expires_at,
+                expiry_days: UserInvitation::TOKEN_EXPIRY_DAYS
+            },
+            subject: EmailTemplate.find_by(name: template_name)&.subject&.gsub('{{account_name}}', invitation.account.name),
             async: true
         )
     end

@@ -7,13 +7,10 @@ module EmailService
       from  = options[:from] || default_from_address
       subject = options[:subject]
 
-      mail = UserMailer.send_template_email(to, template_name, context)
-      return unless mail
+      delivery = UserMailer.send_template_email(to, template_name, context, subject: subject, from: from)
+      return unless delivery
 
-      mail.subject = subject if subject.present?
-      mail.from    = from if from != UserMailer.default[:from]
-
-      async ? mail.deliver_later : mail.deliver_now
+      async ? delivery.deliver_later : delivery.deliver_now
     rescue => e
       handle_error(e, to, template_name, context)
       nil

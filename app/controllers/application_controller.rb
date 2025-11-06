@@ -86,4 +86,14 @@ class ApplicationController < ActionController::API
 			Sentry.capture_exception(exception)
 		end
 	end
+
+	def handle_unexpected_error(exception, action: nil)
+		controller_name = self.class.name
+		action_name_to_log = action || (respond_to?(:action_name) ? action_name : 'unknown')
+		Rails.logger.error(
+			"#{controller_name}##{action_name_to_log} error: #{exception.class} - #{exception.message}\n" \
+			+ exception.backtrace&.first(5)&.join("\n")
+		)
+		render_failure(message: I18n.t('errors.unexpected_error', default: 'Something went wrong'), status: :internal_server_error)
+	end
 end

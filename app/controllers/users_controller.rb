@@ -1,66 +1,41 @@
 class UsersController < ApplicationController
   before_action :authenticate_request, only: [:index, :show]
+  before_action :set_invitation, only: [:signup]
 
   def signup
-    invitation_token = params[:invitation_token]
-
-    # Check if there's a valid invitation
-    invitation = invitation_token.present? ? UserInvitation.find_valid_invitation(invitation_token) : nil
-
-    # If no invitation but email is invited, reject signup
-    if invitation.nil? && invitation_token.present?
+    # Validate invitation token if provided
+    if invalid_invitation_token?
       return render_failure(
-        message: "Invalid or expired invitation token. Please request a new invitation.",
+        message: I18n.t("errors.invalid_invitation_token", default: "Invalid or expired invitation token. Please request a new invitation."),
         status: :unprocessable_entity
       )
     end
 
-    # Check if email has pending invitation but no token provided
-    email = params.dig(:user, :email)
-    if invitation.nil? && email.present?
-      pending_invitation = UserInvitation.active.find_by(email: email)
-      if pending_invitation.present?
-        return render_failure(
-          message: "This email has a pending invitation. Please use the invitation link sent to your email.",
-          status: :unprocessable_entity
-        )
-      end
-    end
-    user = User.new(signup_params)
-
-    begin
-      ActiveRecord::Base.transaction do
-        if user.save
-          # Assign user to account based on invitation or default to KaryaApp
-          # Determine account from invitation, or fall back to KaryaApp default
-          target_account = invitation&.account || Account.karyaapp_account
-
-          if invitation.present?
-            # User was invited - add to the invitation's account with specified role
-            target_account.add_user(user, invitation.role)
-            invitation.mark_as_accepted!
-          else
-            # No invitation - add to default account as regular user
-            target_account.add_user(user, Role.user)
-          end
-
-          render_created(
-            message: I18n.t("signup_activation_mail", default: "Signup successful! Please check your email for activation instructions."),
-            data: { id: user.id, account: (invitation&.account || Account.karyaapp_account).name }
-          )
-        else
-          render_failure(
-            message: I18n.t("errors.signup_fail", errors: user.errors.full_messages&.first, default: "Signup failed"),
-            errors: user.errors.full_messages
-          )
-        end
-      end
-    rescue ActiveRecord::RecordNotUnique => e
-      render_failure(
-        message: I18n.t("errors.signup_fail", default: "Signup failed"),
-        errors: [I18n.t("errors.signup_record_not_unique", default: "Email or mobile already exists")]
+    # Block signup when there's a pending invitation for the email but no valid token
+    if pending_invitation_for_email?
+      return render_failure(
+        message: I18n.t("errors.pending_invitation_exists", default: "This email has a pending invitation. Please use the invitation link sent to your email."),
+        status: :unprocessable_entity
       )
     end
+
+    user = build_user
+
+    ActiveRecord::Base.transaction do
+      if user.save
+        assign_user_to_account(user)
+        render_signup_success(user)
+      else
+        handle_signup_failure(user)
+      end
+    end
+  rescue ActiveRecord::RecordNotUnique
+    render_failure(
+      message: I18n.t("errors.signup_fail", default: "Signup failed"),
+      errors: [I18n.t("errors.signup_record_not_unique", default: "Email or mobile already exists")]
+    )
+  rescue => e
+    handle_unexpected_error(e, action: :signup)
   end
 
 
@@ -99,4 +74,57 @@ class UsersController < ApplicationController
     params.require(:user).permit(:first_name, :last_name, :mobile, :email, :password, :password_confirmation, :account_name)
   end
 
+  def set_invitation
+    invitation_token = params[:invitation_token]
+    @invitation = invitation_token.present? ? UserInvitation.find_valid_invitation(invitation_token) : nil
+  end
+
+  private
+
+  def build_user
+    User.new(signup_params)
+  end
+
+  def invitation_token
+    params[:invitation_token].to_s.presence
+  end
+
+  def invalid_invitation_token?
+    invitation_token.present? && @invitation.nil?
+  end
+
+  def signup_email
+    params.dig(:user, :email)
+  end
+
+  def pending_invitation_for_email?
+    @invitation.nil? && signup_email.present? && UserInvitation.active.exists?(email: signup_email)
+  end
+
+  def target_account
+    @invitation&.account || Account.karyaapp_account
+  end
+
+  def assign_user_to_account(user)
+    if @invitation.present?
+      target_account.add_user(user, @invitation.role)
+      @invitation.mark_as_accepted!
+    else
+      target_account.add_user(user, Role.user)
+    end
+  end
+
+  def render_signup_success(user)
+    render_created(
+      message: I18n.t("signup_activation_mail", default: "Signup successful! Please check your email for activation instructions."),
+      data: { id: user.id, account: target_account.name }
+    )
+  end
+
+  def handle_signup_failure(user)
+    render_failure(
+      message: I18n.t("errors.signup_fail", errors: user.errors.full_messages&.first, default: "Signup failed"),
+      errors: user.errors.full_messages
+    )
+  end
 end  

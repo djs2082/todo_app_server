@@ -12,6 +12,8 @@ class UserInvitationsController < ApplicationController
       message: "Invitations retrieved successfully",
       data: UserInvitationRepresenter.render_collection(invitations)
     )
+  rescue => e
+    handle_unexpected_error(e, action: :index)
   end
 
   # POST /accounts/:account_id/invitations
@@ -36,11 +38,8 @@ class UserInvitationsController < ApplicationController
         status: result.status
       )
     end
-
-    
-      # Send invitation email (will be implemented with mailer)
-      # UserInvitationMailer.invite_user(invitation).deliver_later rescue nil
-
+  rescue => e
+    handle_unexpected_error(e, action: :create)
   end
 
   # GET /invitations/:id
@@ -51,6 +50,8 @@ class UserInvitationsController < ApplicationController
       message: I18n.t("success.invitation_retrieved", default: "Invitation retrieved successfully") ,
       data: UserInvitationRepresenter.render(@invitation)
     )
+  rescue => e
+    handle_unexpected_error(e, action: :show)
   end
 
   # DELETE /invitations/:id
@@ -62,6 +63,8 @@ class UserInvitationsController < ApplicationController
     else
       render_failure(message: I18n.t("fail_to_cancel_invitation", default: "Failed to cancel invitation"))
     end
+  rescue => e
+    handle_unexpected_error(e, action: :destroy)
   end
 
   # POST /invitations/:id/resend
@@ -78,24 +81,8 @@ class UserInvitationsController < ApplicationController
     if @invitation.expired?
       @invitation.extend_expiry!
     end
-
-    # Resend invitation email using EmailService
-    template_name = @invitation.role.administrator? ? 'invite_admin' : 'invite_user'
-
-    EmailService.send_email(
-      to: @invitation.email,
-      template_name: template_name,
-      context: {
-        account_name: @invitation.account.name,
-        role_name: @invitation.role.name.titleize,
-        inviter_name: @invitation.inviter ? "#{@invitation.inviter.first_name} #{@invitation.inviter.last_name}" : "An administrator",
-        signup_url: "#{ENV.fetch('FRONTEND_URL', 'http://localhost:3000')}/signup?invitation_token=#{@invitation.token}",
-        expires_at: @invitation.expires_at,
-        expiry_days: UserInvitation::TOKEN_EXPIRY_DAYS
-      },
-      subject: EmailTemplate.find_by(name: template_name)&.subject&.gsub('{{account_name}}', @invitation.account.name),
-      async: false  # Send immediately for resend
-    )
+    
+    @invitation.publish_resend_event
 
     render_success(message: I18n.t("success.invitation_resent", default: "Invitation resent successfully"))
   rescue => e
@@ -108,14 +95,14 @@ class UserInvitationsController < ApplicationController
   def set_account
     @account = Account.active.find_by(id: params[:account_id])
     unless @account
-      render_failure(message: I18n.t("errors.account_not_found", default: "Account not found"), status: :not_found)
+      return render_failure(message: I18n.t("errors.account_not_found", default: "Account not found"), status: :not_found)
     end
   end
 
   def set_invitation
     @invitation = UserInvitation.find_by(id: params[:id])
     unless @invitation
-      render_failure(message: I18n.t("errors.invitation_not_found", default: "Invitation not found"), status: :not_found)
+      return render_failure(message: I18n.t("errors.invitation_not_found", default: "Invitation not found"), status: :not_found)
     end
   end
 

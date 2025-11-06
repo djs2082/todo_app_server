@@ -10,16 +10,16 @@ module UserInvitations
 
         def call
             role = Role.find_by(id: @params[:role_id])
-            return Result.new(false, I18n.t("errors.role_not_found"), nil, nil, :not_found) unless role
+            return Result.new(success?: false, message: I18n.t("errors.role_not_found"), invitation: nil, errors: nil, status: :not_found) unless role
 
             existing_user = User.find_by(email: @params[:email])
             if existing_user&.belongs_to_account?(@account)
-                return Result.new(false, I18n.t("errors.user_already_member"), nil, nil, :unprocessable_entity)
+                return Result.new(success?: false, message: I18n.t("errors.user_already_member"), invitation: nil, errors: nil, status: :unprocessable_entity)
             end
 
             existing_invitation = UserInvitation.active.find_by(email: @params[:email], account: @account)
             if existing_invitation
-                return Result.new(false, I18n.t("errors.invitation_already_exists"), nil, nil, :unprocessable_entity)
+                return Result.new(success?: false, message: I18n.t("errors.invitation_already_exists"), invitation: nil, errors: nil, status: :unprocessable_entity)
             end
 
             invitation = UserInvitation.new(

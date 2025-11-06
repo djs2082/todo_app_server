@@ -50,10 +50,15 @@ en:
     pending_invitation_resend_error: "Can only resend pending invitations"
     invitation_resent: "Invitation resent successfully"
     invitation_not_found: "Invitation not found"
+    unexpected_error: "Something went wrong"
     unauthorized:
       account_policy:
         show?: "You are not authorized to view this account"
         update?: "You are not authorized to update this account"
+      user_invitation_policy:
+        resend?: "You are not authorized to resend this invitation"
+        cancel?: "You are not authorized to cancel this invitation"
+        destroy?: "You are not authorized to delete this invitation"
   success:
     login_success: "Login successful"
     logout_success: "Logout successful"
