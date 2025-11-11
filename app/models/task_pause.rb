@@ -2,6 +2,7 @@
 class TaskPause < ApplicationRecord
   # Associations
   belongs_to :task
+  belongs_to :account, optional: true
   has_many :task_events, as: :eventable, dependent: :destroy
   has_many :task_snapshots, as: :snapshotable, dependent: :destroy
   

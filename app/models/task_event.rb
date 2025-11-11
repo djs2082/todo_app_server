@@ -3,6 +3,7 @@ class TaskEvent < ApplicationRecord
   # Polymorphic association
   belongs_to :task
   belongs_to :eventable, polymorphic: true
+  belongs_to :account, optional: true
   
   # Validations
   validates :event_type, presence: true, 

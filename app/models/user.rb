@@ -15,6 +15,9 @@ class User < ApplicationRecord
   has_secure_password
   has_many :events, as: :initiator
   has_many :tasks, dependent: :destroy
+  has_many :memberships, class_name: 'AccountMembership', dependent: :destroy
+  has_many :accounts, through: :memberships
+  belongs_to :default_account, class_name: 'Account', optional: true
   has_many :settings, as: :configurable, dependent: :destroy
 
   # Multi-tenant associations

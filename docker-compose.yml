@@ -25,6 +25,10 @@ services:
       - MAILER_DELIVERY_METHOD=${MAILER_DELIVERY_METHOD}
       - APP_BASE_URL=${APP_BASE_URL}
       - ACTIVATION_FAILURE_URL=${ACTIVATION_FAILURE_URL}
+      - WEB_DOMAIN=${WEB_DOMAIN}
+      - ACCESS_TOKEN_TTL_SECONDS=${ACCESS_TOKEN_TTL_SECONDS}
+      - REFRESH_TOKEN_TTL_SECONDS=${REFRESH_TOKEN_TTL_SECONDS}
+      - SENTRY_DSN=${SENTRY_DSN}
     depends_on:
       - db
       - redis
@@ -104,6 +108,8 @@ services:
     restart: unless-stopped
     depends_on:
       - db
+    ports:
+      - "6379:6379"
 
 volumes:
   mysql_data:

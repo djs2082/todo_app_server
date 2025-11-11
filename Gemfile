@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-ruby "3.0.2"
+ruby "3.3.0"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 7.1.5", ">= 7.1.5.2"
@@ -54,7 +54,11 @@ group :development, :test do
   gem "dotenv-rails"
   gem "rspec-rails", "~> 6.1"
   gem "simplecov", require: false, group: :test
+  gem "rswag-specs"
+  gem 'rswag-api'
+  gem 'rswag-ui'
 end
+
 
 group :test do
   gem "sqlite3", "~> 1.4"

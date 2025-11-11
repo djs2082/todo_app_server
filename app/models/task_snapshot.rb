@@ -3,6 +3,7 @@ class TaskSnapshot < ApplicationRecord
   # Polymorphic association
   belongs_to :task
   belongs_to :snapshotable, polymorphic: true
+  belongs_to :account, optional: true
   
   # Validations
   validates :snapshot_type, presence: true

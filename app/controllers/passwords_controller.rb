@@ -1,10 +1,11 @@
 class PasswordsController < ApplicationController
+  skip_before_action :authenticate_request, only: [:create, :update]
   # POST /password/forgot { email: "user@example.com" }
   def create
     email = params[:email].to_s.strip.downcase
     user = User.find_by(email: email)
 
-    if user
+    if user 
       user.generate_reset_password_token!
       user.publish_forgot_password_event
     end

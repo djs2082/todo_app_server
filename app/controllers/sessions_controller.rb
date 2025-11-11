@@ -1,5 +1,5 @@
 class SessionsController < ApplicationController
-
+  skip_before_action :authenticate_request, only: [:create, :refresh, :destroy]
   def create
     user = User.find_by(email: login_params[:email])
     return render_unauthorized(message: I18n.t("errors.user_not_activated")) unless user&.activated?
