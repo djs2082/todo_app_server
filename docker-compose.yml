@@ -35,7 +35,7 @@ services:
     volumes:
       - .:/app
     command: >
-      sh -c "bundle exec rails db:create db:migrate && bundle exec rails s -b 0.0.0.0 -p 3000"
+      sh -c "bundle exec rails db:create db:migrate && rails db:seed && bundle exec rails s -b 0.0.0.0 -p 3000"
     restart: unless-stopped
 
   resque:
